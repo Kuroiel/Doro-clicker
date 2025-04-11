@@ -12,5 +12,13 @@ export const upgrades = [
         cost: 50,
         multiplier: 3,
         purchased: false
+    },
+    {
+        id: 3,
+        name: "Auto Clicker",
+        cost: 100,
+        type: 'autoclicker',
+        value: 1,
+        purchased: false
     }
 ];
