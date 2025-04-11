@@ -1,0 +1,21 @@
+{
+    "name": "doro-clicker",
+    "version": "1.0.0",
+    "scripts": {
+        "test:unit": "jest",
+        "test:e2e": "playwright test",
+        "test:e2e:ui": "playwright test --ui"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.44.0",
+        "jest": "^29.7.0"
+    },
+    "main": "playwright.config.js",
+    "directories": {
+        "test": "test"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": ""
+}

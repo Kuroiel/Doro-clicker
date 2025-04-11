@@ -1,0 +1,59 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+.title {
+    text-align: center;
+    padding: 1rem;
+    background-color: #333;
+    color: white;
+}
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 80px;
+    width: 250px;
+    padding: 1rem;
+    background-color: #fff;
+    height: calc(100vh - 80px);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.game-area {
+    margin-left: 250px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+#doro-image {
+    cursor: pointer;
+    max-width: 200px;
+    transition: transform 0.1s;
+}
+
+#doro-image:active {
+    transform: scale(0.95);
+}
+
+#score-display {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.upgrade-button {
+    padding: 0.5rem;
+    margin: 0.5rem 0;
+    width: 100%;
+    cursor: pointer;
+}
