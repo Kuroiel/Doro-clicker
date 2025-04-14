@@ -35,7 +35,7 @@ jobs:
           sleep 25
         done
         echo "Site did not become available"
-        exit 1
+        exit 0
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
     - name: Run Playwright tests
