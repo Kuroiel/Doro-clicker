@@ -13,10 +13,31 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
+    - name: Cache node_modules
+      uses: actions/cache@v3
+      with:
+          path: |
+            node_modules
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-modules-${{ hashFiles('package-lock.json') }}        
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright
       run: npx playwright install --with-deps chromium  # Only install Chromium
+    - name: Check site availability
+      run: |
+        for i in {1..5}; do
+          if curl -s -I $E2E_BASE_URL | grep "200 OK"; then
+            echo "Site is available"
+            exit 0
+          fi
+          echo "Attempt $i: Site not ready, retrying in 10s..."
+          sleep 10
+        done
+        echo "Site did not become available"
+        exit 1
+      env: 
+        E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
     - name: Run Playwright tests
       run: |
         npx playwright test \
