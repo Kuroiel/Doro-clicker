@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Doro Clicker', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    // Use relative path to leverage baseURL configuration
+    await page.goto('/');
   });
 
   const getScore = async (page) => {

@@ -19,6 +19,8 @@ jobs:
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       run: npx playwright test
+      env: 
+        E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:

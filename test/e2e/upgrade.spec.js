@@ -3,7 +3,7 @@ import { TestHelpers } from '../helpers.js';
 
 test.describe('Upgrades System', () => {
   test('upgrade button becomes affordable when player has enough doros', async ({ page }) => {
-    await page.goto('http://localhost:3000');
+    await page.goto('/');
     
     // Initial state check
     const initialState = await TestHelpers.getUpgradeState(page, 1);
