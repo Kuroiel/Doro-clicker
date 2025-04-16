@@ -30,4 +30,25 @@ test.describe('Doro Clicker', () => {
     }
     expect(await getScore(page)).toBe(clicks);
   });
+
+  // Add this test to verify multiplier stacking
+  test('multiplier upgrade increases click value cumulatively', async ({ page }) => {
+    // Buy first level (cost=10)
+    for (let i = 0; i < 10; i++) await page.click('#doro-image');
+    await page.click('[data-id="1"]');
+    
+    // Verify first level works
+    let initial = await getScore(page);
+    await page.click('#doro-image');
+    expect(await getScore(page)).toBe(initial + 2); // 1 base + 1 level
+    
+    // Buy second level (cost=100)
+    for (let i = 0; i < 90; i++) await page.click('#doro-image');
+    await page.click('[data-id="1"]');
+    
+    // Verify second level works
+    initial = await getScore(page);
+    await page.click('#doro-image');
+    expect(await getScore(page)).toBe(initial + 3); // 1 base + 2 levels
+  });
 });

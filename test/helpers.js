@@ -11,7 +11,8 @@ export const TestHelpers = {
         const button = document.querySelector(`[data-id="${id}"]`);
         return {
           disabled: button.disabled,
-          purchased: button.textContent.includes('(Purchased)'),
+          // Changed to check for level display
+          purchased: button.textContent.includes('Level'), 
           affordable: button.classList.contains('affordable')
         };
       }, upgradeId);

@@ -1,18 +1,13 @@
 export const upgrades = [
     {
         id: 1,
-        name: "Double Click",
-        cost: 10,
-        multiplier: 2,
-        purchased: false
-    },
-    {
-        id: 2,
-        name: "Triple Click",
-        cost: 50,
-        multiplier: 3,
-        purchased: false
-    },
+        name: "Click Power",
+        type: 'multiplier',
+        baseCost: 10,
+        multiplier: 2, // Add this property
+        purchased: 0,
+        cost: function() { return this.baseCost * Math.pow(10, this.purchased) }
+      },
     {
         id: 3,
         name: "Auto Clicker",

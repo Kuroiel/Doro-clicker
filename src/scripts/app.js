@@ -6,6 +6,8 @@ class DoroClicker {
     constructor() {
     // Initialize state first
     this.state = new GameState();
+
+    this.upgrades = upgrades;
     
     // Initialize other properties
     this.clickMultiplier = 1;
@@ -78,7 +80,7 @@ class DoroClicker {
         document.getElementById('upgrades-container').addEventListener('click', (e) => {
             if (e.target.classList.contains('upgrade-button')) {
                 const upgradeId = parseInt(e.target.dataset.id);
-                this.handleUpgradePurchase(upgradeId);
+                this.purchaseUpgrade(upgradeId); // Directly call without extra checks
             }
         });
     }
@@ -87,23 +89,30 @@ class DoroClicker {
         this.state.increment(this.clickMultiplier);
         this.updateScoreDisplay();
     }
-
-    handleUpgradePurchase(upgradeId) {
-        const upgrade = upgrades.find(u => u.id === upgradeId);
-        if (!upgrade.purchased && this.state.purchaseUpgrade(upgrade)) {
-            this.applyUpgrade(upgrade);
-            this.updateScoreDisplay();
-            this.renderUpgrades();
-        }
+    purchaseUpgrade(upgradeId) {
+        const upgrade = this.upgrades.find(u => u.id === upgradeId);
+        // Check if autoclicker was already purchased
+        if (upgrade.type === 'autoclicker' && upgrade.purchased) return false;
+        
+        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+        if (!upgrade || this.state.doros < cost) return false;
+    
+        this.state.doros -= cost;
+        upgrade.type === 'multiplier' ? upgrade.purchased++ : upgrade.purchased = true;
+        this.applyUpgrade(upgrade);
+        this.updateScoreDisplay();
+        this.renderUpgrades();
+        return true;
     }
 
     applyUpgrade(upgrade) {
         if (upgrade.type === 'multiplier') {
-            this.clickMultiplier = upgrade.multiplier;
+          // Change from += to *= for multiplicative growth
+          this.clickMultiplier *= upgrade.multiplier; 
         } else if (upgrade.type === 'autoclicker') {
-            this.state.autoclickers += upgrade.value;
+          this.state.autoclickers += upgrade.value;
         }
-    }
+      }
 
     updateScoreDisplay() {
         document.getElementById('score-display').textContent = `Doros: ${this.state.doros}`;
@@ -111,17 +120,23 @@ class DoroClicker {
 
     renderUpgrades() {
         const container = document.getElementById('upgrades-container');
-        container.innerHTML = upgrades.map(upgrade => `
-            <button 
-                class="upgrade-button"
-                data-id="${upgrade.id}"
-                ${upgrade.purchased ? 'disabled' : ''}
-                ${this.state.doros < upgrade.cost ? 'disabled' : ''}
-            >
-                ${upgrade.name} - Cost: ${upgrade.cost} Doros
-                ${upgrade.purchased ? ' (Purchased)' : ''}
-            </button>
-        `).join('');
+        container.innerHTML = this.upgrades.map(upgrade => {
+            const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+            const isAutoclickerPurchased = upgrade.type === 'autoclicker' && upgrade.purchased;
+            const canAfford = this.state.doros >= cost && !isAutoclickerPurchased;
+    
+            return `
+                <button 
+                    class="upgrade-button ${canAfford ? 'affordable' : ''}"
+                    data-id="${upgrade.id}"
+                    ${isAutoclickerPurchased ? 'disabled' : ''}
+                    ${this.state.doros < cost ? 'disabled' : ''}
+                >
+                    ${upgrade.name} ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''} - 
+                    Cost: ${cost} Doros
+                </button>
+            `;
+        }).join('');
     }
 }
 
