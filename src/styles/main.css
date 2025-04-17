@@ -142,8 +142,15 @@ body {
 
 .upgrade-view {
     display: none;
+    transition: none;
 }
 
 .upgrade-view.active-view {
     display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }

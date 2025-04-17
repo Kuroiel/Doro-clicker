@@ -32,17 +32,32 @@ class DoroClicker {
         this.renderUpgrades();
         this.updateStatsDisplay();
       }
-      renderUpgrades() {
-        const autoContainer = DOMHelper.getAutoclickersContainer();
-        const upgradeContainer = DOMHelper.getUpgradesContainer();
+// Update renderUpgrades method to ensure correct filtering
+renderUpgrades() {
+    const autoContainer = DOMHelper.getAutoclickersContainer();
+    const upgradeContainer = DOMHelper.getUpgradesContainer();
+
+    // Explicitly filter by upgrade types
+    const autoclickers = this.upgrades.filter(u => u.type === 'autoclicker');
+    const multipliers = this.upgrades.filter(u => u.type === 'multiplier');
+
+    // Debug logging (optional)
+    console.log('Autoclickers:', autoclickers);
+    console.log('Multipliers:', multipliers);
+
+    // Clear previous content
+    autoContainer.innerHTML = '';
+    upgradeContainer.innerHTML = '';
+
+    // Render each type to its dedicated container
+    autoclickers.forEach(upgrade => {
+        autoContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+    });
     
-        // Split upgrades by type
-        const autoclickers = this.upgrades.filter(u => u.type === 'autoclicker');
-        const multipliers = this.upgrades.filter(u => u.type === 'multiplier');
-    
-        autoContainer.innerHTML = autoclickers.map(upgrade => this.renderUpgradeButton(upgrade)).join('');
-        upgradeContainer.innerHTML = multipliers.map(upgrade => this.renderUpgradeButton(upgrade)).join('');
-    }
+    multipliers.forEach(upgrade => {
+        upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+    });
+}
 
     renderUpgradeButton(upgrade) {
         const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
@@ -93,7 +108,7 @@ class DoroClicker {
             doroImage.style.transform = 'scale(1)';
         });
 
-        DOMHelper.getUpgradesContainer().addEventListener('click', (e) => {
+        document.querySelector('.sidebar').addEventListener('click', (e) => {
             if (e.target.classList.contains('upgrade-button')) {
                 const upgradeId = parseInt(e.target.dataset.id);
                 this.purchaseUpgrade(upgradeId);
@@ -109,14 +124,19 @@ class DoroClicker {
     }
 
     switchView(view) {
-        // Update buttons
+        // Validate view parameter
+        const validViews = ['autoclickers', 'upgrades'];
+        if (!validViews.includes(view)) return;
+    
+        // Update button states
         document.querySelectorAll('.view-button').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === view);
         });
     
-        // Update containers
+        // Update container visibility
         document.querySelectorAll('.upgrade-view').forEach(container => {
-            container.classList.toggle('active-view', container.id === `${view}-container`);
+            const isTarget = container.id === `${view}-container`;
+            container.classList.toggle('active-view', isTarget);
         });
     }
 
@@ -154,27 +174,7 @@ class DoroClicker {
         DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
     }
 
-// app.js - Updated renderUpgrades method
-renderUpgrades() {
-    const container = document.getElementById('upgrades-container');
-    container.innerHTML = this.upgrades.map(upgrade => {
-        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-        // Calculate affordability using class method
-        const canAfford = this.canAfford(upgrade);
 
-        return `
-            <button 
-                class="upgrade-button ${canAfford ? 'affordable' : ''}"
-                data-id="${upgrade.id}"
-                ${!canAfford ? 'disabled' : ''}
-            >
-                ${upgrade.name} ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''} - 
-                Cost: ${cost} Doros
-                ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
-            </button>
-        `;
-    }).join('');
-}
 
     updateStatsDisplay() {
         const stats = DOMHelper.getStatElements();
