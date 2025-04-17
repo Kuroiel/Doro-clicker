@@ -113,3 +113,37 @@ body {
     margin: 1rem 0;
     font-size: 1.2rem;
 }
+
+/* Add these styles to the end of the file */
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.view-button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.view-button:hover {
+    background-color: #e0e0e0;
+}
+
+.view-button.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+.upgrade-view {
+    display: none;
+}
+
+.upgrade-view.active-view {
+    display: block;
+}

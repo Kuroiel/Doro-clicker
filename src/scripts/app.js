@@ -33,22 +33,34 @@ class DoroClicker {
         this.updateStatsDisplay();
       }
       renderUpgrades() {
-        const container = DOMHelper.getUpgradesContainer();
-        if (!container) {
-          console.error('Upgrades container not found!');
-          return;
-        }
-        
-        container.innerHTML = this.state.upgrades.map(upgrade => `
-          <button class="upgrade-button ${this.canAfford(upgrade) ? 'affordable' : ''}"
-                  data-id="${upgrade.id}"
-                  ${upgrade.purchased ? 'disabled' : ''}
-                  data-testid="upgrade-${upgrade.id}">
-            ${upgrade.name} - Cost: ${upgrade.cost} Doros
-            ${upgrade.purchased ? ' (Purchased)' : ''}
-          </button>
-        `).join('');
-      }
+        const autoContainer = DOMHelper.getAutoclickersContainer();
+        const upgradeContainer = DOMHelper.getUpgradesContainer();
+    
+        // Split upgrades by type
+        const autoclickers = this.upgrades.filter(u => u.type === 'autoclicker');
+        const multipliers = this.upgrades.filter(u => u.type === 'multiplier');
+    
+        autoContainer.innerHTML = autoclickers.map(upgrade => this.renderUpgradeButton(upgrade)).join('');
+        upgradeContainer.innerHTML = multipliers.map(upgrade => this.renderUpgradeButton(upgrade)).join('');
+    }
+
+    renderUpgradeButton(upgrade) {
+        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+        const canAfford = this.canAfford(upgrade);
+    
+        return `
+            <button 
+                class="upgrade-button ${canAfford ? 'affordable' : ''}"
+                data-id="${upgrade.id}"
+                ${!canAfford ? 'disabled' : ''}
+            >
+                ${upgrade.name} 
+                ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''}
+                - Cost: ${cost} Doros
+                ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
+            </button>
+        `;
+    }
     
 // app.js - Updated canAfford method
     canAfford(upgrade) {
@@ -86,6 +98,25 @@ class DoroClicker {
                 const upgradeId = parseInt(e.target.dataset.id);
                 this.purchaseUpgrade(upgradeId);
             }
+        });
+
+        document.querySelectorAll('.view-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const view = e.target.dataset.view;
+                this.switchView(view);
+            });
+        });
+    }
+
+    switchView(view) {
+        // Update buttons
+        document.querySelectorAll('.view-button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+    
+        // Update containers
+        document.querySelectorAll('.upgrade-view').forEach(container => {
+            container.classList.toggle('active-view', container.id === `${view}-container`);
         });
     }
 
