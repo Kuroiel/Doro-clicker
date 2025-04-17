@@ -90,8 +90,9 @@ canAfford(upgrade) {
     }
 
     handleClick() {
-        this.state.increment(this.clickMultiplier);
         this.state.manualClicks++;
+        this.state.increment(this.clickMultiplier);
+
         DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
     }
     purchaseUpgrade(upgradeId) {

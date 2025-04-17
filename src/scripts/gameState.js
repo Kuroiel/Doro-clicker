@@ -10,7 +10,7 @@ export class GameState {
 
   increment(amount = 1) {
     this.doros += amount;
-    this.totalDoros += amount; // Track all Doros earned
+    this.totalDoros += amount; // Track all Doros earned (manual + auto)
     this.notify();
   }
 
@@ -30,11 +30,7 @@ export class GameState {
     notify() {
       this.listeners.forEach(cb => cb());
     }
-  
-    increment(amount = 1) {
-      this.doros += amount;
-      this.notify();
-    }
+
   
 
   }
