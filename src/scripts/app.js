@@ -51,10 +51,10 @@ class DoroClicker {
       }
     
 // app.js - Updated canAfford method
-canAfford(upgrade) {
+    canAfford(upgrade) {
     const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
     return this.state.doros >= cost;
-}
+    }
       setupAutoclicker() {
         this.autoclickerInterval = setInterval(() => {
             if (this.state?.autoclickers > 0) {
@@ -153,13 +153,21 @@ renderUpgrades() {
     }
 
     setupStatsEvents() {
-        document.getElementById('show-stats').addEventListener('click', () => {
-            DOMHelper.toggleVisibility(DOMHelper.getStatsElement(), true);
-        });
+            // Get reference to the stats overlay element
+    const statsElement = DOMHelper.getStatsElement();
+
+    // Toggle stats visibility when clicking "View Stats" button
+    document.getElementById('show-stats').addEventListener('click', () => {
+        // Check current visibility state using computed style
+        const isVisible = window.getComputedStyle(statsElement).display === 'block';
+        // Toggle to opposite state
+        DOMHelper.toggleVisibility(statsElement, !isVisible);
+    });
         
-        document.getElementById('close-stats').addEventListener('click', () => {
-            DOMHelper.toggleVisibility(DOMHelper.getStatsElement(), false);
-        });
+    // Preserve close button functionality
+    document.getElementById('close-stats').addEventListener('click', () => {
+        DOMHelper.toggleVisibility(statsElement, false);
+    });
     }
 }
 
