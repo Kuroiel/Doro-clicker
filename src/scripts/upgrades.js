@@ -11,9 +11,18 @@ export const upgrades = [
     {
         id: 3,
         name: "Auto Clicker",
-        cost: 100,
         type: 'autoclicker',
+        baseCost: 100,
         value: 1,
-        purchased: false
+        purchased: 0, // Change from boolean to number
+        cost: function() { 
+            // Gentle scaling for first 50 purchases, then steeper
+            const phase = this.purchased <= 50 ? 1.07 : 1.15;
+            const phasePurchases = this.purchased <= 50 
+                ? this.purchased 
+                : 50 + (this.purchased - 50) * 1.5;
+            
+            return Math.round(this.baseCost * Math.pow(phase, phasePurchases));
+        }
     }
 ];

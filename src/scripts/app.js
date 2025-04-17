@@ -22,7 +22,7 @@ class DoroClicker {
     init() {
 
         this.setupEventListeners();
-        this.setupAutoclicker();
+        this.setupStatsEvents(); 
         this.state.addListener(() => this.updateUI());
         this.updateUI();
     }
@@ -30,9 +30,10 @@ class DoroClicker {
     updateUI() {
         this.updateScoreDisplay();
         this.renderUpgrades();
+        this.updateStatsDisplay();
       }
       renderUpgrades() {
-        const container = document.getElementById('upgrades-container');
+        const container = DOMHelper.getUpgradesContainer();
         if (!container) {
           console.error('Upgrades container not found!');
           return;
@@ -49,16 +50,19 @@ class DoroClicker {
         `).join('');
       }
     
-      canAfford(upgrade) {
-        return !upgrade.purchased && this.state.doros >= upgrade.cost;
-      }
+// app.js - Updated canAfford method
+canAfford(upgrade) {
+    const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+    return this.state.doros >= cost;
+}
       setupAutoclicker() {
         this.autoclickerInterval = setInterval(() => {
-            if (this.state?.autoclickers > 0) { // Optional chaining
-              this.state.increment(this.state.autoclickers);
+            if (this.state?.autoclickers > 0) {
+                const amount = this.state.autoclickers; // 1 Doro per autoclicker
+                this.state.addAutoDoros(amount);
             }
-          }, 1000);
-      }
+        }, 1000);
+    }
       
       // Add component cleanup
       destroy() {
@@ -66,7 +70,7 @@ class DoroClicker {
       }
 
     setupEventListeners() {
-        const doroImage = document.getElementById('doro-image');
+        const doroImage = DOMHelper.getDoroImage();
         doroImage.addEventListener('click', () => this.handleClick());
         
         doroImage.addEventListener('mousedown', () => {
@@ -77,66 +81,84 @@ class DoroClicker {
             doroImage.style.transform = 'scale(1)';
         });
 
-        document.getElementById('upgrades-container').addEventListener('click', (e) => {
+        DOMHelper.getUpgradesContainer().addEventListener('click', (e) => {
             if (e.target.classList.contains('upgrade-button')) {
                 const upgradeId = parseInt(e.target.dataset.id);
-                this.purchaseUpgrade(upgradeId); // Directly call without extra checks
+                this.purchaseUpgrade(upgradeId);
             }
         });
     }
 
     handleClick() {
         this.state.increment(this.clickMultiplier);
-        this.updateScoreDisplay();
+        this.state.manualClicks++;
+        DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
     }
     purchaseUpgrade(upgradeId) {
         const upgrade = this.upgrades.find(u => u.id === upgradeId);
-        // Check if autoclicker was already purchased
-        if (upgrade.type === 'autoclicker' && upgrade.purchased) return false;
         
         const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
         if (!upgrade || this.state.doros < cost) return false;
     
         this.state.doros -= cost;
-        upgrade.type === 'multiplier' ? upgrade.purchased++ : upgrade.purchased = true;
+
+        upgrade.purchased += 1;
         this.applyUpgrade(upgrade);
         this.updateScoreDisplay();
         this.renderUpgrades();
+        this.updateUI();
         return true;
     }
 
     applyUpgrade(upgrade) {
         if (upgrade.type === 'multiplier') {
-          // Change from += to *= for multiplicative growth
-          this.clickMultiplier *= upgrade.multiplier; 
+            this.clickMultiplier *= upgrade.multiplier;
         } else if (upgrade.type === 'autoclicker') {
-          this.state.autoclickers += upgrade.value;
+            this.state.autoclickers += upgrade.value;
         }
       }
 
     updateScoreDisplay() {
-        document.getElementById('score-display').textContent = `Doros: ${this.state.doros}`;
+        DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
     }
 
-    renderUpgrades() {
-        const container = document.getElementById('upgrades-container');
-        container.innerHTML = this.upgrades.map(upgrade => {
-            const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-            const isAutoclickerPurchased = upgrade.type === 'autoclicker' && upgrade.purchased;
-            const canAfford = this.state.doros >= cost && !isAutoclickerPurchased;
-    
-            return `
-                <button 
-                    class="upgrade-button ${canAfford ? 'affordable' : ''}"
-                    data-id="${upgrade.id}"
-                    ${isAutoclickerPurchased ? 'disabled' : ''}
-                    ${this.state.doros < cost ? 'disabled' : ''}
-                >
-                    ${upgrade.name} ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''} - 
-                    Cost: ${cost} Doros
-                </button>
-            `;
-        }).join('');
+// app.js - Updated renderUpgrades method
+renderUpgrades() {
+    const container = document.getElementById('upgrades-container');
+    container.innerHTML = this.upgrades.map(upgrade => {
+        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+        // Calculate affordability using class method
+        const canAfford = this.canAfford(upgrade);
+
+        return `
+            <button 
+                class="upgrade-button ${canAfford ? 'affordable' : ''}"
+                data-id="${upgrade.id}"
+                ${!canAfford ? 'disabled' : ''}
+            >
+                ${upgrade.name} ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''} - 
+                Cost: ${cost} Doros
+                ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
+            </button>
+        `;
+    }).join('');
+}
+
+    updateStatsDisplay() {
+        const stats = DOMHelper.getStatElements();
+        DOMHelper.setText(stats.clicks, this.state.manualClicks);
+        DOMHelper.setText(stats.dps, this.state.autoclickers);
+        DOMHelper.setText(stats.total, this.state.totalDoros);
+    }
+
+    setupStatsEvents() {
+        document.getElementById('show-stats').addEventListener('click', () => {
+            DOMHelper.toggleVisibility(DOMHelper.getStatsElement(), true);
+        });
+        
+        document.getElementById('close-stats').addEventListener('click', () => {
+            DOMHelper.toggleVisibility(DOMHelper.getStatsElement(), false);
+        });
     }
 }
 
