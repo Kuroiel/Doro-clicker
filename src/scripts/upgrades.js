@@ -1,7 +1,7 @@
 export const upgrades = [
     {
         id: 1,
-        name: "Click Power",
+        name: "Doro Power",
         type: 'multiplier',
         baseCost: 10,
         multiplier: 2, // Add this property
