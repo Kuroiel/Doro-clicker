@@ -24,6 +24,8 @@ class DoroClicker {
         this.setupEventListeners();
         this.setupStatsEvents(); 
         this.state.addListener(() => this.updateUI());
+            // Set default view to autoclickers
+    this.switchView('autoclickers');
         this.updateUI();
     }
 
@@ -64,17 +66,17 @@ renderUpgrades() {
         const canAfford = this.canAfford(upgrade);
     
         return `
-            <button 
-                class="upgrade-button ${canAfford ? 'affordable' : ''}"
-                data-id="${upgrade.id}"
-                ${!canAfford ? 'disabled' : ''}
-            >
-                ${upgrade.name} 
-                ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased + 1})` : ''}
-                - Cost: ${cost} Doros
-                ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
-            </button>
-        `;
+        <button 
+            class="upgrade-button ${canAfford ? 'affordable' : ''}"
+            data-id="${upgrade.id}"
+            ${!canAfford ? 'disabled' : ''}
+        >
+            ${upgrade.name} 
+            ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased})` : ''}
+            - Cost: ${cost} Doros
+            ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
+        </button>
+    `;
     }
     
 // app.js - Updated canAfford method
@@ -164,7 +166,7 @@ renderUpgrades() {
 
     applyUpgrade(upgrade) {
         if (upgrade.type === 'multiplier') {
-            this.clickMultiplier *= upgrade.multiplier;
+            this.clickMultiplier += upgrade.value;
         } else if (upgrade.type === 'autoclicker') {
             this.state.autoclickers += upgrade.value;
         }

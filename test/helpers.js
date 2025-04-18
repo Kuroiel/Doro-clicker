@@ -16,5 +16,10 @@ export const TestHelpers = {
           affordable: button.classList.contains('affordable')
         };
       }, upgradeId);
+    },
+
+    ensureUpgradesView: async (page) => {
+      await page.click('[data-view="upgrades"]');
+      await page.waitForSelector('#upgrades-container.active-view');
     }
   };

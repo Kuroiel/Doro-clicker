@@ -66,7 +66,7 @@ static removeClass(element, className) {
   if (element) element.classList.remove(className);
 }
 
-// Add these methods to the DOMHelper class
+
 static getAutoclickersContainer() {
   return document.getElementById('autoclickers-container');
 }

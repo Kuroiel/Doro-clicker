@@ -4,7 +4,7 @@ export const upgrades = [
         name: "Doro Power",
         type: 'multiplier',
         baseCost: 10,
-        multiplier: 2, // Add this property
+        value: 1, // Changed from 'multiplier: 2' to 'value: 1'
         purchased: 0,
         cost: function() { return this.baseCost * Math.pow(10, this.purchased) }
       },

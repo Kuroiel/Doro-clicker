@@ -31,8 +31,10 @@ test.describe('Doro Clicker', () => {
     expect(await getScore(page)).toBe(clicks);
   });
 
-  // Add this test to verify multiplier stacking
   test('multiplier upgrade increases click value cumulatively', async ({ page }) => {
+    // Switch to upgrades view first
+    await page.click('[data-view="upgrades"]');
+    
     // Buy first level (cost=10)
     for (let i = 0; i < 10; i++) await page.click('#doro-image');
     await page.click('[data-id="1"]');
@@ -40,15 +42,19 @@ test.describe('Doro Clicker', () => {
     // Verify first level works
     let initial = await getScore(page);
     await page.click('#doro-image');
-    expect(await getScore(page)).toBe(initial + 2); // 1 base + 1 level
+    expect(await getScore(page)).toBe(initial + 2);
+
+    // Earn 100 more doros (50 clicks * 2 doros each)
+    for (let i = 0; i < 50; i++) await page.click('#doro-image');
     
-    // Buy second level (cost=100)
-    for (let i = 0; i < 90; i++) await page.click('#doro-image');
+    // Ensure upgrade is clickable again
+    await page.click('[data-view="upgrades"]'); // Re-assert view
+    await page.waitForSelector('[data-id="1"]:not(:disabled)');
     await page.click('[data-id="1"]');
-    
+
     // Verify second level works
     initial = await getScore(page);
     await page.click('#doro-image');
-    expect(await getScore(page)).toBe(initial + 3); // 1 base + 2 levels
-  });
+    expect(await getScore(page)).toBe(initial + 3);
+});
 });
