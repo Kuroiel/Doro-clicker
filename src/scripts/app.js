@@ -1,5 +1,6 @@
 import { GameState } from './gameState.js';
-import { upgrades } from './upgrades.js';
+import { autoclickers } from './autoclickers.js';
+import { upgrades } from './upgrades.js'; // Updated reference
 import { DOMHelper } from './dom.js';
 
 class DoroClicker {
@@ -7,7 +8,8 @@ class DoroClicker {
     // Initialize state first
     this.state = new GameState();
 
-    this.upgrades = upgrades;
+    this.autoclickers = autoclickers;
+    this.upgrades = upgrades; 
     
     // Initialize other properties
     this.clickMultiplier = 1;
@@ -39,45 +41,64 @@ renderUpgrades() {
     const autoContainer = DOMHelper.getAutoclickersContainer();
     const upgradeContainer = DOMHelper.getUpgradesContainer();
 
-    // Explicitly filter by upgrade types
-    const autoclickers = this.upgrades.filter(u => u.type === 'autoclicker');
-    const multipliers = this.upgrades.filter(u => u.type === 'multiplier');
-
-    // Debug logging (optional)
-    console.log('Autoclickers:', autoclickers);
-    console.log('Multipliers:', multipliers);
-
     // Clear previous content
     autoContainer.innerHTML = '';
     upgradeContainer.innerHTML = '';
 
-    // Render each type to its dedicated container
-    autoclickers.forEach(upgrade => {
+    // Render autoclickers
+    this.autoclickers.forEach(upgrade => {
         autoContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
     });
     
-    multipliers.forEach(upgrade => {
+    // Render upgrades (formerly multipliers)
+    this.upgrades.forEach(upgrade => { // Changed from 'multipliers' to 'upgrades'
         upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
     });
 }
 
-    renderUpgradeButton(upgrade) {
-        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-        const canAfford = this.canAfford(upgrade);
+// app.js - Update renderUpgradeButton method
+renderUpgradeButton(upgrade) {
+    const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+    const canAfford = this.canAfford(upgrade);
+    const isLurkingDoro = upgrade.id === 2; // Identify Lurking Doro by ID
+
+    // Build button content
+    let innerHTML = '';
     
-        return `
+    // Add icon for Lurking Doro
+    if (isLurkingDoro) {
+        innerHTML += `<img src="./src/assets/dorocreep.webp" alt="Lurking Doro" class="upgrade-icon">`;
+    }
+
+    // Main button text
+    innerHTML += `
+        ${upgrade.name} 
+        ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased})` : ''}
+        - Cost: ${cost} Doros
+        ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
+    `;
+
+    // Add tooltip for Lurking Doro
+    if (isLurkingDoro) {
+        innerHTML += `
+            <div class="upgrade-tooltip">
+                <p>A lurking Doro that slowly gets you more Doros.</p>
+                <p><i>Provides 1 Doro per second<br>
+                Currently providing: ${this.state.autoclickers} Doros per second</i></p>
+            </div>
+        `;
+    }
+
+    return `
         <button 
             class="upgrade-button ${canAfford ? 'affordable' : ''}"
             data-id="${upgrade.id}"
             ${!canAfford ? 'disabled' : ''}
         >
-            ${upgrade.name} 
-            ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased})` : ''}
-            - Cost: ${cost} Doros
-            ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
+            ${innerHTML}
         </button>
     `;
-    }
+}
     
 // app.js - Updated canAfford method
     canAfford(upgrade) {
@@ -149,17 +170,18 @@ renderUpgrades() {
         DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
     }
     purchaseUpgrade(upgradeId) {
-        const upgrade = this.upgrades.find(u => u.id === upgradeId);
+        // Search both upgrade types
+        let upgrade = this.autoclickers.find(u => u.id === upgradeId) || 
+                     this.upgrades.find(u => u.id === upgradeId); // Changed from 'multipliers'
         
+        if (!upgrade) return false;
+    
         const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-        if (!upgrade || this.state.doros < cost) return false;
+        if (this.state.doros < cost) return false;
     
         this.state.doros -= cost;
-
         upgrade.purchased += 1;
         this.applyUpgrade(upgrade);
-        this.updateScoreDisplay();
-        this.renderUpgrades();
         this.updateUI();
         return true;
     }

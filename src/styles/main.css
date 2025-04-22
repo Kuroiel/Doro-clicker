@@ -158,3 +158,44 @@ body {
 .upgrade-view:not(.active-view) {
     display: none !important;
 }
+
+/* main.css - Add to end of file */
+.upgrade-button {
+    position: relative; /* Required for tooltip positioning */
+    text-align: left;
+    padding-left: 0.5rem !important; /* Add padding for icon */
+}
+
+.upgrade-icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+.upgrade-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    background: #ffffff;
+    color: #333;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+    z-index: 1000;
+    pointer-events: none; /* Prevent tooltip from blocking hover */
+}
+
+.upgrade-tooltip i {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.upgrade-button:hover .upgrade-tooltip {
+    display: block;
+}
