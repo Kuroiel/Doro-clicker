@@ -16,11 +16,13 @@ export class GameState {
 
   // Add auto-generated Doros
   addAutoDoros(amount) {
-    this.doros += amount;
-    this.totalAutoDoros += amount;
-    this.totalDoros += amount;
+    // Get the actual DPS value from the autoclicker definition
+    const actualAmount = amount * this.getCurrentDPSMultiplier();
+    this.doros += actualAmount;
+    this.totalAutoDoros += actualAmount;
+    this.totalDoros += actualAmount;
     this.notify();
-  }
+}
   
 
   addListener(callback) {
@@ -31,6 +33,11 @@ export class GameState {
       this.listeners.forEach(cb => cb());
     }
 
-  
+    getCurrentDPSMultiplier() {
+      // This would normally come from your game instance,
+      // but for simplicity we'll assume it's tracked here
+      // In a real implementation, you might want to move this to the main game class
+      return 1; // Default multiplier
+  }
 
   }

@@ -1,21 +1,22 @@
-// autoclickers.js - Auto-clicker type upgrades
+
 export const autoclickers = [
     {
         id: 2,
         name: "Lurking Doro",
         type: 'autoclicker',
         baseCost: 10,
-        value: 1,
+        baseDPS: 1, // Add this to track base DPS before multipliers
+        value: 1, // This will now represent the current DPS after upgrades
         purchased: 0,
         icon: './src/assets/dorocreep.webp',
         description: 'A lurking Doro that slowly gets you more Doros.',
         effectDescription: (value, purchased) => 
-            `Provides ${value} Doro per second.\nCurrently providing: ${value * purchased} Doros per second.`,
+            `Provides ${value} Doro per second per Lurking Doro.\nCurrently providing: ${value * purchased} Doros per second.`,
+        // Modify the cost function to use baseDPS where appropriate
         cost: function() { 
             const purchased = this.purchased;
             let cost = this.baseCost;
 
-            // Exponential cost formula with milestone jumps
             const baseGrowth = 1.1;
             cost *= Math.pow(baseGrowth, purchased);
 
@@ -23,13 +24,11 @@ export const autoclickers = [
             const decadeFactor = 1.7;
             cost *= Math.pow(decadeFactor, decades);
 
-            // Milestone adjustments
             if (purchased >= 1000) cost *= 10;
             else if (purchased >= 500) cost *= 5;
             else if (purchased >= 200) cost *= 5;
             else if (purchased >= 100) cost *= 5;
 
-            // Ensure minimum cost increase
             if (purchased > 0) {
                 let prevCost = this.baseCost;
                 prevCost *= Math.pow(baseGrowth, purchased - 1);
@@ -47,5 +46,4 @@ export const autoclickers = [
             return Math.round(cost);
         }
     }
-    // Add new autoclickers here
 ];

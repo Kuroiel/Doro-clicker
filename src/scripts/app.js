@@ -42,7 +42,6 @@ renderUpgrades() {
     const autoContainer = DOMHelper.getAutoclickersContainer();
     const upgradeContainer = DOMHelper.getUpgradesContainer();
 
-    // Clear previous content
     autoContainer.innerHTML = '';
     upgradeContainer.innerHTML = '';
 
@@ -51,9 +50,17 @@ renderUpgrades() {
         autoContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
     });
     
-    // Render upgrades (formerly multipliers)
-    this.upgrades.forEach(upgrade => { // Changed from 'multipliers' to 'upgrades'
-        upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+    // Render upgrades with precise visibility control
+    this.upgrades.forEach(upgrade => {
+        // For regular upgrades without visibility check
+        if (typeof upgrade.isVisible !== 'function') {
+            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+        } 
+        // For upgrades with visibility check (like Lurking Doro upgrade)
+        else if (upgrade.isVisible(this.state)) {
+            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+        }
+        // Otherwise, don't render it at all
     });
 }
 
@@ -135,18 +142,20 @@ renderUpgradeButton(upgrade) {
     purchaseUpgrade(upgradeId) {
         // Search both upgrade types
         let upgrade = this.autoclickers.find(u => u.id === upgradeId) || 
-                     this.upgrades.find(u => u.id === upgradeId); // Changed from 'multipliers'
-        
-        if (!upgrade) return false;
-    
-        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-        if (this.state.doros < cost) return false;
-    
-        this.state.doros -= cost;
-        upgrade.purchased += 1;
-        this.applyUpgrade(upgrade);
-        this.updateUI();
-        return true;
+        this.upgrades.find(u => u.id === upgradeId);
+
+if (!upgrade) return false;
+
+const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+if (this.state.doros < cost) return false;
+
+this.state.doros -= cost;
+upgrade.purchased += 1;
+this.applyUpgrade(upgrade);
+
+// Force immediate UI update to reflect visibility changes
+this.updateUI();
+return true;
     }
 
     applyUpgrade(upgrade) {
@@ -154,8 +163,14 @@ renderUpgradeButton(upgrade) {
             this.clickMultiplier += upgrade.value;
         } else if (upgrade.type === 'autoclicker') {
             this.state.autoclickers += upgrade.value;
+        } else if (upgrade.type === 'dpsMultiplier') {
+            // Find the Lurking Doro and upgrade its DPS
+            const lurkingDoro = this.autoclickers.find(a => a.id === 2);
+            if (lurkingDoro) {
+                lurkingDoro.value = lurkingDoro.baseDPS * Math.pow(upgrade.value, upgrade.purchased);
+            }
         }
-      }
+    }
 
     updateScoreDisplay() {
         DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
