@@ -2,6 +2,7 @@ import { GameState } from './gameState.js';
 import { autoclickers } from './autoclickers.js';
 import { upgrades } from './upgrades.js'; // Updated reference
 import { DOMHelper } from './dom.js';
+import { UpgradeRenderer } from './upgradeRenderer.js';
 
 class DoroClicker {
     constructor() {
@@ -56,48 +57,10 @@ renderUpgrades() {
     });
 }
 
-// app.js - Update renderUpgradeButton method
+
 renderUpgradeButton(upgrade) {
-    const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
     const canAfford = this.canAfford(upgrade);
-    const isLurkingDoro = upgrade.id === 2; // Identify Lurking Doro by ID
-
-    // Build button content
-    let innerHTML = '';
-    
-    // Add icon for Lurking Doro
-    if (isLurkingDoro) {
-        innerHTML += `<img src="./src/assets/dorocreep.webp" alt="Lurking Doro" class="upgrade-icon">`;
-    }
-
-    // Main button text
-    innerHTML += `
-        ${upgrade.name} 
-        ${upgrade.type === 'multiplier' ? `(Level ${upgrade.purchased})` : ''}
-        - Cost: ${cost} Doros
-        ${upgrade.type === 'autoclicker' ? `(Owned: ${upgrade.purchased})` : ''}
-    `;
-
-    // Add tooltip for Lurking Doro
-    if (isLurkingDoro) {
-        innerHTML += `
-            <div class="upgrade-tooltip">
-                <p>A lurking Doro that slowly gets you more Doros.</p>
-                <p><i>Provides 1 Doro per second<br>
-                Currently providing: ${this.state.autoclickers} Doros per second</i></p>
-            </div>
-        `;
-    }
-
-    return `
-        <button 
-            class="upgrade-button ${canAfford ? 'affordable' : ''}"
-            data-id="${upgrade.id}"
-            ${!canAfford ? 'disabled' : ''}
-        >
-            ${innerHTML}
-        </button>
-    `;
+    return UpgradeRenderer.renderUpgradeButton(upgrade, canAfford);
 }
     
 // app.js - Updated canAfford method

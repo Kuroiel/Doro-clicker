@@ -161,24 +161,31 @@ body {
 
 /* main.css - Add to end of file */
 .upgrade-button {
-    position: relative; /* Required for tooltip positioning */
+    position: relative;
     text-align: left;
-    padding-left: 0.5rem !important; /* Add padding for icon */
+    padding: 0.5rem !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
 }
 
 .upgrade-icon {
     width: 24px;
     height: 24px;
-    vertical-align: middle;
-    margin-right: 0.5rem;
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .upgrade-tooltip {
+    opacity: 1 !important;
     display: none;
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
     width: 220px;
     background: #ffffff;
     color: #333;
@@ -188,7 +195,7 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     font-size: 0.9rem;
     z-index: 1000;
-    pointer-events: none; /* Prevent tooltip from blocking hover */
+    pointer-events: none;
 }
 
 .upgrade-tooltip i {
@@ -198,4 +205,20 @@ body {
 
 .upgrade-button:hover .upgrade-tooltip {
     display: block;
+}
+
+/* Add these new styles to main.css */
+.upgrade-first-line {
+    padding-left: 30px; /* Space for icon */
+    font-weight: bold;
+    position: relative;
+}
+
+.upgrade-second-line {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 0.2rem;
 }

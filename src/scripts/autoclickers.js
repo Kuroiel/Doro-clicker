@@ -7,6 +7,10 @@ export const autoclickers = [
         baseCost: 10,
         value: 1,
         purchased: 0,
+        icon: './src/assets/dorocreep.webp',
+        description: 'A lurking Doro that slowly gets you more Doros.',
+        effectDescription: (value, purchased) => 
+            `Provides ${value} Doro per second.\nCurrently providing: ${value * purchased} Doros per second.`,
         cost: function() { 
             const purchased = this.purchased;
             let cost = this.baseCost;
