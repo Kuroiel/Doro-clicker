@@ -6,6 +6,7 @@ export class GameState {
     this.totalAutoDoros = 0; // Track auto-generated Doros
     this.totalDoros = 0; // Track all-time Doros
     this.listeners = [];
+    this.globalDpsMultiplier = 1;
   }
 
   increment(amount = 1) {
@@ -33,11 +34,23 @@ export class GameState {
       this.listeners.forEach(cb => cb());
     }
 
+    getTotalDPS() {
+      // In a real implementation, you would sum (value * purchased) for all autoclickers
+      // For now, we'll assume this is calculated elsewhere and stored in this.autoclickers
+      return this.autoclickers * this.globalDpsMultiplier;
+    }
+  
+    // AC6: Add method to apply global DPS multiplier
+    applyGlobalDpsMultiplier(multiplier) {
+      this.globalDpsMultiplier *= multiplier;
+    }
+  
+    // Modify getCurrentDPSMultiplier to include global multiplier
     getCurrentDPSMultiplier() {
-      // This would normally come from your game instance,
-      // but for simplicity we'll assume it's tracked here
-      // In a real implementation, you might want to move this to the main game class
-      return 1; // Default multiplier
-  }
+      return this.globalDpsMultiplier;
+    }
+
+
+
 
   }

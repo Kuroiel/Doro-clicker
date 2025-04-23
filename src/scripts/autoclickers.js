@@ -10,7 +10,7 @@ export const autoclickers = [
         icon: './src/assets/dorocreep.webp',
         description: 'A lurking Doro that slowly gets you more Doros.',
         effectDescription: (value, purchased) => 
-            `Provides ${value} Doro per second per Lurking Doro.\nCurrently providing: ${value * purchased} Doros per second.`,
+            `Provides ${value} Doro per second.\nCurrently providing: ${value * purchased} Doros per second.`,
         // Modify the cost function to use baseDPS where appropriate
         cost: function() { 
             const purchased = this.purchased;

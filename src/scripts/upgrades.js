@@ -43,5 +43,27 @@ export const upgrades = [
             return this.purchased < thresholds.length && 
                    lurkingDoros >= nextThreshold;
         }
+    },
+    {
+        id: 5, // Using ID 5 to avoid conflicts with existing upgrades
+        name: "Motivating Doro",
+        type: 'globalDpsMultiplier',
+        baseCost: 10000,
+        value: 1.10, // 10% boost
+        purchased: 0,
+        icon: './src/assets/dorowhip.webp',
+        description: 'A "motivating" Doro to make all Doros work harder.',
+        effectDescription: () => 'Adds 10% to the base value of all Doros',
+        cost: function() {
+            return this.baseCost;
+        },
+        // AC1 & AC2: Only show when total DPS > 500
+        isVisible: function(gameState) {
+            // Calculate total DPS by summing (value * purchased) for all autoclickers
+            const totalDPS = gameState.getTotalDPS();
+            return totalDPS >= 500 && this.purchased < 1;
+        },
+        // AC7 & AC7.1: Control rendering order by priority
+        priority: 1 // Higher priority than other hidden upgrades
     }
 ];

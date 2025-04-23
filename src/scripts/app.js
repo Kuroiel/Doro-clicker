@@ -37,7 +37,9 @@ class DoroClicker {
         this.renderUpgrades();
         this.updateStatsDisplay();
       }
-// Update renderUpgrades method to ensure correct filtering
+
+      
+// app.js - Update renderUpgrades method
 renderUpgrades() {
     const autoContainer = DOMHelper.getAutoclickersContainer();
     const upgradeContainer = DOMHelper.getUpgradesContainer();
@@ -50,17 +52,29 @@ renderUpgrades() {
         autoContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
     });
     
-    // Render upgrades with precise visibility control
+    // Separate visible and hidden upgrades
+    const visibleUpgrades = [];
+    const hiddenUpgrades = [];
+    
     this.upgrades.forEach(upgrade => {
-        // For regular upgrades without visibility check
         if (typeof upgrade.isVisible !== 'function') {
-            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
-        } 
-        // For upgrades with visibility check (like Lurking Doro upgrade)
-        else if (upgrade.isVisible(this.state)) {
-            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+            visibleUpgrades.push(upgrade);
+        } else if (upgrade.isVisible(this.state)) {
+            hiddenUpgrades.push(upgrade);
         }
-        // Otherwise, don't render it at all
+    });
+
+    // Sort hidden upgrades by priority (higher first)
+    hiddenUpgrades.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+
+    // Render visible upgrades first
+    visibleUpgrades.forEach(upgrade => {
+        upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+    });
+
+    // Then render hidden upgrades (sorted by priority)
+    hiddenUpgrades.forEach(upgrade => {
+        upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
     });
 }
 
@@ -169,6 +183,9 @@ return true;
             if (lurkingDoro) {
                 lurkingDoro.value = lurkingDoro.baseDPS * Math.pow(upgrade.value, upgrade.purchased);
             }
+        } else if (upgrade.type === 'globalDpsMultiplier') {
+            // AC6: Apply global DPS multiplier
+            this.state.applyGlobalDpsMultiplier(upgrade.value);
         }
     }
 
