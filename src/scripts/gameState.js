@@ -36,11 +36,15 @@ export class GameState {
   }
   
   notify() {
-    const dorosChanged = Math.abs(this.doros - this._lastNotifiedDoros) > 1;
+    // Check if Doros have changed (any difference)
+    const dorosChanged = this.doros !== this._lastNotifiedDoros;
     
+    // Notify listeners if:
+    // 1. Doros changed, OR
+    // 2. This is the first notification (initial state)
     if (dorosChanged || !this._lastNotifiedDoros) {
-        this._lastNotifiedDoros = this.doros;
-        this.listeners.forEach(cb => cb());
+        this._lastNotifiedDoros = this.doros; // Update last notified value
+        this.listeners.forEach(cb => cb()); // Trigger all UI updates
     }
     }
 
