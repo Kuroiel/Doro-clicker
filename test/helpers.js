@@ -1,25 +1,16 @@
-export const TestHelpers = {
-    getDorosCount: async (page) => {
-      return page.evaluate(() => {
-        const text = document.getElementById('score-display').textContent;
-        return parseInt(text.split(' ')[1]) || 0;
-      });
-    },
-  
-    getUpgradeState: async (page, upgradeId) => {
-      return page.evaluate((id) => {
-        const button = document.querySelector(`[data-id="${id}"]`);
-        return {
-          disabled: button.disabled,
-          // Changed to check for level display
-          purchased: button.textContent.includes('Level'), 
-          affordable: button.classList.contains('affordable')
-        };
-      }, upgradeId);
-    },
+/**
+ * Shared test utilities
+ */
+export async function resetGameState(page) {
+  await page.evaluate(() => {
+    window.doroGame.destroy();
+    window.doroGame = new DoroClicker();
+  });
+}
 
-    ensureUpgradesView: async (page) => {
-      await page.click('[data-view="upgrades"]');
-      await page.waitForSelector('#upgrades-container.active-view');
-    }
-  };
+export async function setDoros(page, amount) {
+  await page.evaluate((amount) => {
+    window.doroGame.state.doros = amount;
+    window.doroGame.updateUI();
+  }, amount);
+}

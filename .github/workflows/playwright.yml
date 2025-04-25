@@ -1,6 +1,6 @@
 name: Playwright Tests
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:  # Manual trigger
     inputs:
       branch:
         description: 'Branch to test against' 
@@ -23,7 +23,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.branch }}  # Use selected branch
+        ref: ${{ github.event.inputs.branch || github.ref }}  # Use selected branch
         
     - uses: actions/setup-node@v4
       with:
@@ -49,7 +49,7 @@ jobs:
           --workers=2 \
           --retries=2 \
           --timeout=60000 \
-          --project=chromium
+          --project=chromium \
           --headed \
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/

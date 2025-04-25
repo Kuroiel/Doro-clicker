@@ -40,11 +40,18 @@ export class UpgradeRenderer {
      */
     static renderTooltip(upgrade) {
         if (!upgrade.description || !upgrade.effectDescription) return '';
+    
+        // Convert newlines to <br> tags in effect description
+        const effectText = typeof upgrade.effectDescription === 'function' 
+            ? upgrade.effectDescription(upgrade.value, upgrade.purchased)
+            : upgrade.effectDescription;
         
+        const formattedEffect = effectText.replace(/\n/g, '<br>');
+    
         return `
             <div class="upgrade-tooltip">
                 <p>${upgrade.description}</p>
-                <p><i>${upgrade.effectDescription(upgrade.value, upgrade.purchased)}</i></p>
+                <p><i>${formattedEffect}</i></p>
             </div>
         `;
     }
@@ -57,15 +64,17 @@ export class UpgradeRenderer {
      */
     static renderUpgradeButton(upgrade, canAfford) {
         return `
-            <button 
-                class="upgrade-button ${canAfford ? 'affordable' : ''}"
-                data-id="${upgrade.id}"
-                ${!canAfford ? 'disabled' : ''}
-            >
+        <button 
+            class="upgrade-button ${canAfford ? 'affordable' : ''}"
+            data-id="${upgrade.id}"
+            ${!canAfford ? 'disabled' : ''}
+        >
+            <div class="upgrade-header">
                 ${this.renderFirstLine(upgrade)}
-                ${this.renderSecondLine(upgrade)}
-                ${this.renderTooltip(upgrade)}
-            </button>
+            </div>
+            ${this.renderSecondLine(upgrade)}
+            ${this.renderTooltip(upgrade)}
+        </button>
         `;
     }
 }

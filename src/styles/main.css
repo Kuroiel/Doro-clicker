@@ -1,3 +1,6 @@
+/* ==================== */
+/* BASE STYLES & RESETS */
+/* ==================== */
 * {
     margin: 0;
     padding: 0;
@@ -9,6 +12,9 @@ body {
     background-color: #f0f0f0;
 }
 
+/* ============= */
+/* LAYOUT STYLES */
+/* ============= */
 .title {
     text-align: center;
     padding: 1rem;
@@ -36,6 +42,9 @@ body {
     gap: 2rem;
 }
 
+/* ============= */
+/* GAME ELEMENTS */
+/* ============= */
 #doro-image {
     cursor: pointer;
     max-width: 200px;
@@ -51,21 +60,29 @@ body {
     font-weight: bold;
 }
 
+/* ============= */
+/* UPGRADE BUTTONS */
+/* ============= */
 .upgrade-button {
-    padding: 0.5rem;
+    position: relative;
+    padding: 0.5rem !important;
     margin: 0.5rem 0;
     width: 100%;
     cursor: pointer;
     background-color: #4CAF50;
-    color: white;
+    color: #333;
     border: none;
     border-radius: 4px;
-    transition: all 0.2s;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    transition: all 0.2s ease-out;
 }
 
 .upgrade-button:hover:not(:disabled) {
     background-color: #45a049;
-    transform: translateY(-1px);
 }
 
 .upgrade-button:disabled {
@@ -73,17 +90,133 @@ body {
     cursor: not-allowed;
     opacity: 0.7;
 }
-.upgrade-button.affordable {
-    opacity: 1;
-    background-color: #2196F3;
-    transform: scale(1.02);
-  }
-  
-  .upgrade-button.affordable:hover {
-    transform: scale(1.05);
-  }
 
-  /* Add to end of file */
+.upgrade-button.affordable {
+    background-color: #2196F3;
+}
+
+.upgrade-button.affordable:hover {
+    background-color: #1a7fd9;
+}
+
+.upgrade-button.processing {
+    opacity: 0.8;
+}
+
+.upgrade-button.processing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.5);
+    animation: processingPulse 1s infinite;
+}
+
+/* Upgrade button content structure */
+
+.upgrade-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0.3rem;
+}
+
+.upgrade-first-line {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    gap: 0.5rem;
+}
+
+.upgrade-second-line {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.9em;
+    color: #444;
+}
+
+.upgrade-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Upgrade tooltip */
+.upgrade-tooltip {
+    display: none;
+    position: absolute;
+    left: calc(100% + 10px); /* Position to the right of the button */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 220px;
+    background: #ffffff;
+    color: #333;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.upgrade-tooltip i {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.upgrade-button:hover .upgrade-tooltip {
+    display: block;
+}
+
+.upgrade-tooltip br {
+    content: '';
+    display: block;
+    margin: 0.3rem 0;
+}
+
+/* ============= */
+/* VIEW TOGGLES */
+/* ============= */
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.view-button {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.view-button:hover {
+    background-color: #e0e0e0;
+}
+
+.view-button.active {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #45a049;
+}
+
+.upgrade-view {
+    display: none;
+}
+
+.upgrade-view.active-view {
+    display: block;
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* ============= */
+/* STATS OVERLAY */
+/* ============= */
 .stats-overlay {
     display: none;
     position: fixed;
@@ -114,111 +247,26 @@ body {
     font-size: 1.2rem;
 }
 
-/* Add these styles to the end of the file */
-.view-toggle {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.view-button {
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-.view-button:hover {
-    background-color: #e0e0e0;
-}
-
-.view-button.active {
-    background-color: #4CAF50;
-    color: white;
-    border-color: #45a049;
-}
-
-.upgrade-view {
-    display: none;
-    transition: none;
-}
-
-.upgrade-view.active-view {
-    display: block;
-    animation: fadeIn 0.3s ease-in;
-}
-
+/* ============= */
+/* ANIMATIONS */
+/* ============= */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-.upgrade-view:not(.active-view) {
-    display: none !important;
+@keyframes processingPulse {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
 }
 
-/* main.css - Add to end of file */
-.upgrade-button {
-    position: relative;
-    text-align: left;
-    padding: 0.5rem !important;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.3rem;
-}
-
-.upgrade-icon {
-    width: 24px;
-    height: 24px;
-    position: absolute;
-    left: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.upgrade-tooltip {
-    opacity: 1 !important;
-    display: none;
-    position: absolute;
-    left: calc(100% + 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    width: 220px;
-    background: #ffffff;
-    color: #333;
-    padding: 0.8rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    font-size: 0.9rem;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-.upgrade-tooltip i {
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.upgrade-button:hover .upgrade-tooltip {
-    display: block;
-}
-
-/* Add these new styles to main.css */
-.upgrade-first-line {
-    padding-left: 30px; /* Space for icon */
-    font-weight: bold;
-    position: relative;
-}
-
-.upgrade-second-line {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    font-size: 0.9em;
-    color: #666;
-    margin-top: 0.2rem;
+@media (max-width: 768px) {
+    .upgrade-tooltip {
+        left: 50%;
+        top: auto;
+        bottom: 100%;
+        transform: translateX(-50%);
+        margin-bottom: 10px;
+    }
 }

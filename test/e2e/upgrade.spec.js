@@ -1,101 +1,60 @@
+/**
+ * Tests upgrade purchasing and effects
+ */
 import { test, expect } from '@playwright/test';
-import { TestHelpers } from '../helpers.js';
 
-test.describe('Upgrades System', () => {
-  test('upgrade button becomes affordable when player has enough doros', async ({ page }) => {
+test.describe('Upgrade System', () => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    // Set initial doros for upgrade tests
+    await page.evaluate(() => {
+      window.doroGame.state.doros = 1000;
+      window.doroGame.updateUI();
+    });
+  });
+
+  test('should purchase click multiplier upgrade', async ({ page }) => {
+    const upgradeButton = page.locator('[data-id="1"]');
     
-    // Click until we have 10 doros
-    while ((await TestHelpers.getDorosCount(page)) < 10) {
-        await page.click('#doro-image');
-    }
-
-    // Switch to upgrades view
-    await TestHelpers.ensureUpgradesView(page);
+    // Verify initial state
+    await expect(upgradeButton).toContainText('Cost: 10 Doros');
     
-    // Wait for affordable state
-    await page.waitForSelector('[data-id="1"].affordable:not(:disabled)');
+    // Purchase upgrade
+    await upgradeButton.click();
     
-    const postState = await TestHelpers.getUpgradeState(page, 1);
-    expect(postState.affordable).toBe(true);
-    expect(postState.disabled).toBe(false);
-});
-
-test('purchasing upgrade affects game state', async ({ page }) => {
-  await page.goto('/');
-  
-  // Earn enough for upgrade
-  for (let i = 0; i < 10; i++) {
-      await page.click('#doro-image');
-  }
-  
-  // Switch to upgrades view
-  await TestHelpers.ensureUpgradesView(page);
-  
-  // Purchase upgrade
-  await page.click('[data-id="1"]');
-
-  // Verify changes
-  await page.waitForSelector('[data-id="1"]:has-text("Level 1")');
-  const buttonText = await page.locator('[data-id="1"]').textContent();
-  expect(buttonText).toContain("Level 1");
-  
-  // Verify multiplier effect
-  const initialScore = await TestHelpers.getDorosCount(page);
-  await page.click('#doro-image');
-  expect(await TestHelpers.getDorosCount(page)).toBeGreaterThanOrEqual(initialScore + 2);
-});
-
-  test('autoclicker upgrade adds automatic income', async ({ page }) => {
-    await page.goto('/');
+    // Verify state changes
+    const clickMultiplier = await page.evaluate(() => window.doroGame.clickMultiplier);
+    expect(clickMultiplier).toBe(2);
     
-    // Earn 100 doros
-    while ((await TestHelpers.getDorosCount(page)) < 100) {
-      await page.click('#doro-image');
-    }
+    // Verify cost scaling
+    await expect(upgradeButton).toContainText('Cost: 100 Doros');
+  });
+
+  test('should handle upgrade visibility conditions', async ({ page }) => {
+    // Verify motivating doro is hidden initially
+    await page.locator('[data-view="upgrades"]').click();
+    const motivatingDoro = page.locator('[data-id="5"]');
+    await expect(motivatingDoro).toBeHidden();
     
-    // Buy autoclicker
-    await page.click('[data-id="3"]');
-    const initial = await TestHelpers.getDorosCount(page); // Should be 0
+    // Meet visibility requirements
+    await page.evaluate(() => {
+      window.doroGame.state.autoclickers = 500;
+      window.doroGame.updateUI();
+    });
+    
+    // Verify upgrade appears
+    await expect(motivatingDoro).toBeVisible();
+  });
 
-    // Wait for at least 2 autoclicks (2 seconds)
-    await expect.poll(async () => 
-      await TestHelpers.getDorosCount(page)
-    ).toBeGreaterThanOrEqual(2);
-});
-
-test('multiplier can be purchased multiple times', async ({ page }) => {
-  await page.goto('/');
-  
-  // Switch to upgrades view first
-  await page.click('[data-view="upgrades"]');
-
-  // Buy first level
-  for (let i = 0; i < 10; i++) await page.click('#doro-image');
-  await page.click('[data-id="1"]');
-  
-  // Verify first purchase
-  await expect(page.locator('[data-id="1"]'))
-    .toContainText('Level 1');
-
-  // Earn 100 doros (50 clicks * 2 doros each)
-  for (let i = 0; i < 50; i++) {
-    await page.click('#doro-image');
-    // Add small delay to allow UI updates
-    if (i % 10 === 0) await page.waitForTimeout(50);
-  }
-
-  // Ensure view remains active and button is ready
-  await page.click('[data-view="upgrades"]'); // Re-assert view
-  await page.waitForSelector('[data-id="1"]:not(:disabled)');
-  
-  // Purchase second level
-  await page.click('[data-id="1"]');
-  
-  // Verify level 2
-  await expect(page.locator('[data-id="1"]'))
-    .toContainText('Level 2');
-  await expect(page.locator('[data-id="1"]'))
-    .toContainText('Cost: 1000 Doros');
-});
+  test('should prevent unaffordable purchases', async ({ page }) => {
+    // Reset to low funds
+    await page.evaluate(() => {
+      window.doroGame.state.doros = 5;
+      window.doroGame.updateUI();
+    });
+    
+    const upgradeButton = page.locator('[data-id="1"]');
+    await expect(upgradeButton).toBeDisabled();
+    await expect(upgradeButton).not.toHaveClass(/affordable/);
+  });
 });

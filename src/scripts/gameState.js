@@ -7,11 +7,16 @@ export class GameState {
     this.totalDoros = 0; // Track all-time Doros
     this.listeners = [];
     this.globalDpsMultiplier = 1;
+    this._lastNotifiedDoros = 0;
   }
 
   increment(amount = 1) {
+    if (typeof amount !== 'number' || amount <= 0) {
+      console.error('Invalid increment amount:', amount);
+      return;
+    }
     this.doros += amount;
-    this.totalDoros += amount; // Track all Doros earned (manual + auto)
+    this.totalDoros += amount;
     this.notify();
   }
 
@@ -30,14 +35,21 @@ export class GameState {
     this.listeners.push(callback);
   }
   
-    notify() {
-      this.listeners.forEach(cb => cb());
+  notify() {
+    const dorosChanged = Math.abs(this.doros - this._lastNotifiedDoros) > 1;
+    
+    if (dorosChanged || !this._lastNotifiedDoros) {
+        this._lastNotifiedDoros = this.doros;
+        this.listeners.forEach(cb => cb());
+    }
     }
 
     getTotalDPS() {
-      // In a real implementation, you would sum (value * purchased) for all autoclickers
-      // For now, we'll assume this is calculated elsewhere and stored in this.autoclickers
-      return this.autoclickers * this.globalDpsMultiplier;
+      let total = 0;
+      window.doroGame.autoclickers.forEach(clicker => {
+        total += clicker.value * clicker.purchased;
+      });
+      return total * this.globalDpsMultiplier;
     }
   
     // AC6: Add method to apply global DPS multiplier

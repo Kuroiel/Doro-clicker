@@ -13,6 +13,10 @@ export const autoclickers = [
             `Provides ${value} Doro per second.\nCurrently providing: ${value * purchased} Doros per second.`,
         // Modify the cost function to use baseDPS where appropriate
         cost: function() { 
+            if (typeof this.purchased !== 'number' || this.purchased < 0) {
+                console.error('Invalid purchased count:', this.purchased);
+                return Infinity;
+            }
             const purchased = this.purchased;
             let cost = this.baseCost;
 

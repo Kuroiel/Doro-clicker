@@ -12,7 +12,7 @@ export const upgrades = [
         effectDescription: (value, purchased) => 
             `Increases Doros per click by ${value}.\nCurrently increasing click power by ${value * purchased}.\n(${purchased} × ${value} per level)`,
         cost: function() { 
-            return this.baseCost * Math.pow(10, this.purchased);
+            return Math.round(this.baseCost * Math.pow(10, this.purchased));
         }
     },
     // Add new Lurking Doro upgrade
