@@ -61,6 +61,7 @@ class DoroClicker {
     purchaseUpgrade(upgradeId) {
         if (this._processingPurchase) return false;
         this._processingPurchase = true;
+        this._needsUpgradeRender = true; // Force full UI update after purchase
     
         try {
             const upgrade = this.autoclickers.find(u => u?.id === upgradeId) || 
@@ -84,16 +85,15 @@ class DoroClicker {
             upgrade.purchased += 1;
             this.applyUpgrade(upgrade);
     
-            requestAnimationFrame(() => {
-                this.updateUI();
-                this._processingPurchase = false;
-            });
+            // Immediately update the UI
+            this.updateUI();
     
             return true;
         } catch (error) {
             console.error('Purchase error:', error);
-            this._processingPurchase = false;
             return false;
+        } finally {
+            this._processingPurchase = false;
         }
     }
 
@@ -119,12 +119,14 @@ class DoroClicker {
         this.updateScoreDisplay();
         this.updateStatsDisplay();
         
+        // Force a full re-render of upgrades if needed, otherwise just update button states
         if (this._needsUpgradeRender || !this._lastDoros) {
             this.renderUpgrades();
             this._lastDoros = this.state.doros;
             this._needsUpgradeRender = false;
         } else {
-            this.updateButtonStates();
+            // Update existing buttons with fresh data
+            this.updateAllButtonContents();
         }
     }
 
@@ -137,6 +139,32 @@ class DoroClicker {
         DOMHelper.setText(stats.clicks, this.state.manualClicks);
         DOMHelper.setText(stats.dps, this.state.autoclickers);
         DOMHelper.setText(stats.total, this.state.totalDoros);
+    }
+
+    updateAllButtonContents() {
+        const buttons = DOMHelper.getUpgradeButtons();
+        buttons.forEach(button => {
+            const upgradeId = parseInt(button.dataset.id);
+            const upgrade = this.autoclickers.find(u => u.id === upgradeId) || 
+                           this.upgrades.find(u => u.id === upgradeId);
+            
+            if (upgrade) {
+                // Update button content while preserving its structure
+                const canAfford = this.canAfford(upgrade);
+                const newContent = `
+                    <div class="upgrade-header">
+                        ${UpgradeRenderer.renderFirstLine(upgrade)}
+                    </div>
+                    ${UpgradeRenderer.renderSecondLine(upgrade)}
+                    ${UpgradeRenderer.renderTooltip(upgrade)}
+                `;
+                
+                // Only replace inner content to avoid button recreation
+                button.innerHTML = newContent;
+                button.classList.toggle('affordable', canAfford);
+                button.disabled = !canAfford;
+            }
+        });
     }
 
     switchView(view) {
@@ -159,26 +187,31 @@ class DoroClicker {
     renderUpgrades() {
         const autoContainer = DOMHelper.getAutoclickersContainer();
         const upgradeContainer = DOMHelper.getUpgradesContainer();
-
+    
+        // Clear containers
         autoContainer.innerHTML = '';
         upgradeContainer.innerHTML = '';
-
-        // Render autoclickers
+    
+        // Render autoclickers with fresh data
         this.autoclickers.forEach(upgrade => {
-            autoContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+            const canAfford = this.canAfford(upgrade);
+            autoContainer.insertAdjacentHTML('beforeend', 
+                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford));
         });
         
-        // Separate and sort upgrades
+        // Process and render upgrades with fresh data
         const { visibleUpgrades, hiddenUpgrades } = this.sortUpgrades();
         
-        // Render upgrades
-        visibleUpgrades.forEach(upgrade => {
-            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
+        // Combine visible and hidden upgrades that should be shown
+        const allUpgrades = [...visibleUpgrades, ...hiddenUpgrades];
+        allUpgrades.forEach(upgrade => {
+            const canAfford = this.canAfford(upgrade);
+            upgradeContainer.insertAdjacentHTML('beforeend', 
+                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford));
         });
-
-        hiddenUpgrades.forEach(upgrade => {
-            upgradeContainer.insertAdjacentHTML('beforeend', this.renderUpgradeButton(upgrade));
-        });
+    
+        // Ensure stats are updated
+        this.updateStatsDisplay();
     }
 
     sortUpgrades() {
