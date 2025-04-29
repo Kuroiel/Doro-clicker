@@ -13,6 +13,7 @@ class DoroClicker {
         this.state = new GameState();
         this.autoclickers = autoclickers;
         this.upgrades = upgrades;
+        this.state.setAutoclickers(this.autoclickers);
         
         // Game mechanics
         this.clickMultiplier = 1;
@@ -185,13 +186,29 @@ class DoroClicker {
         const hiddenUpgrades = [];
         
         this.upgrades.forEach(upgrade => {
-            if (typeof upgrade.isVisible !== 'function') {
+            try {
+                if (typeof upgrade.isVisible !== 'function') {
+                    // Always visible if no visibility check
+                    visibleUpgrades.push(upgrade);
+                } else {
+                    // Pass the game instance to visibility check
+                    const isVisible = upgrade.isVisible({
+                        autoclickers: this.autoclickers,
+                        getTotalDPS: () => this.state.getTotalDPS()
+                    });
+                    
+                    if (isVisible) {
+                        hiddenUpgrades.push(upgrade);
+                    }
+                }
+            } catch (error) {
+                console.error(`Error checking visibility for upgrade ${upgrade.id}:`, error);
+                // Default to visible if there's an error
                 visibleUpgrades.push(upgrade);
-            } else if (upgrade.isVisible(this.state)) {
-                hiddenUpgrades.push(upgrade);
             }
         });
-
+    
+        // Sort hidden upgrades by priority (highest first)
         hiddenUpgrades.sort((a, b) => (b.priority || 0) - (a.priority || 0));
         
         return { visibleUpgrades, hiddenUpgrades };

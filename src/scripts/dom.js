@@ -25,7 +25,7 @@ export class DOMHelper {
   // Stats elements
   static getStatsElement() {
     return document.getElementById('stats-overlay');
-}
+  }
 
   static getStatElements() {
       return {
@@ -49,30 +49,23 @@ export class DOMHelper {
       if (element) element.style.display = visible ? 'block' : 'none';
   }
 
-  // You could add more helper methods as needed
-static disableElement(element) {
-  if (element) element.disabled = true;
-}
+  static disableElement(element) {
+    if (element) element.disabled = true;
+  }
 
-static enableElement(element) {
-  if (element) element.disabled = false;
-}
+  static enableElement(element) {
+    if (element) element.disabled = false;
+  }
 
-static addClass(element, className) {
-  if (element) element.classList.add(className);
-}
+  static addClass(element, className) {
+    if (element) element.classList.add(className);
+  }
 
-static removeClass(element, className) {
-  if (element) element.classList.remove(className);
-}
+  static removeClass(element, className) {
+    if (element) element.classList.remove(className);
+  }
 
-
-static getAutoclickersContainer() {
-  return document.getElementById('autoclickers-container');
-}
-
-static getUpgradesContainer() {
-  return document.getElementById('upgrades-container');
-}
-
+  static getAutoclickersContainer() {
+    return document.getElementById('autoclickers-container');
+  }
 }
