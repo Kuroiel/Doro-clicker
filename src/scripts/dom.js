@@ -68,4 +68,80 @@ export class DOMHelper {
   static getAutoclickersContainer() {
     return document.getElementById('autoclickers-container');
   }
+
+  static getSidebarElement() {
+    return document.querySelector('.sidebar');
+  }
+
+  static getScoreElement() {
+    return document.getElementById('score-display');
+  }
+
+  static getDoroImage() {
+    return document.getElementById('doro-image');
+  }
+
+  static getAutoclickersContainer() {
+    return document.getElementById('autoclickers-container');
+  }
+
+  static getUpgradesContainer() {
+    return document.getElementById('upgrades-container');
+  }
+
+  static getStatElements() {
+    return {
+      clicks: document.getElementById('stat-clicks'),
+      dps: document.getElementById('stat-dps'),
+      total: document.getElementById('stat-total')
+    };
+  }
+
+  static getStatsElement() {
+    return document.getElementById('stats-overlay');
+  }
+
+  static getShowStatsButton() {
+    return document.getElementById('show-stats');
+  }
+
+  static getCloseStatsButton() {
+    return document.getElementById('close-stats');
+  }
+
+  static getUpgradeButtons() {
+    return Array.from(document.querySelectorAll('.upgrade-button'));
+  }
+
+  static getSidebarElement() {
+    return document.querySelector('.sidebar');
+  }
+
+  static getViewButtons() {
+    return Array.from(document.querySelectorAll('.view-button'));
+}
+
+static getUpgradeViews() {
+    return Array.from(document.querySelectorAll('.upgrade-view'));
+}
+
+static toggleClass(element, className, condition) {
+    if (element) {
+        element.classList.toggle(className, condition);
+    }
+}
+
+static getViewButtons() {
+  return Array.from(document.querySelectorAll('.view-button'));
+}
+
+static getUpgradeViews() {
+  return Array.from(document.querySelectorAll('.upgrade-view'));
+}
+
+static toggleClass(element, className, condition) {
+  if (element) {
+    element.classList.toggle(className, condition);
+  }
+}
 }

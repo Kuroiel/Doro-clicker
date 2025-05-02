@@ -23,6 +23,7 @@ class DoroClicker {
         this._needsUpgradeRender = true;
         this._processingPurchase = false;
         this._purchaseDebounce = false;
+        this._sidebarElement = null;
         
         // Setup game systems
         this.setupAutoclicker();
@@ -171,13 +172,17 @@ class DoroClicker {
         const validViews = ['autoclickers', 'upgrades'];
         if (!validViews.includes(view)) return;
     
-        document.querySelectorAll('.view-button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === view);
+        // Use DOMHelper to get view buttons
+        const viewButtons = DOMHelper.getViewButtons();
+        viewButtons.forEach(btn => {
+            DOMHelper.toggleClass(btn, 'active', btn.dataset.view === view);
         });
     
-        document.querySelectorAll('.upgrade-view').forEach(container => {
+        // Use DOMHelper to get upgrade views
+        const upgradeViews = DOMHelper.getUpgradeViews();
+        upgradeViews.forEach(container => {
             const isTarget = container.id === `${view}-container`;
-            container.classList.toggle('active-view', isTarget);
+            DOMHelper.toggleClass(container, 'active-view', isTarget);
         });
     }
 
@@ -188,9 +193,8 @@ class DoroClicker {
         const autoContainer = DOMHelper.getAutoclickersContainer();
         const upgradeContainer = DOMHelper.getUpgradesContainer();
     
-        // Clear containers
-        autoContainer.innerHTML = '';
-        upgradeContainer.innerHTML = '';
+        if (autoContainer) autoContainer.innerHTML = '';
+        if (upgradeContainer) upgradeContainer.innerHTML = '';
     
         // Render autoclickers with fresh data
         this.autoclickers.forEach(upgrade => {
@@ -311,22 +315,27 @@ class DoroClicker {
         });
     }
 
-    setupUpgradeButtonListeners() {
-        const sidebar = document.querySelector('.sidebar');
+    
+      setupUpgradeButtonListeners() {
+        const sidebar = DOMHelper.getSidebarElement();
+        if (!sidebar) {
+          console.warn('Sidebar element not found');
+          return;
+        }
         sidebar.addEventListener('click', (e) => {
-            const button = e.target.closest('.upgrade-button');
-            if (button && !button.disabled) {
-                const upgradeId = parseInt(button.dataset.id);
-                if (!isNaN(upgradeId)) {
-                    button.classList.add('processing');
-                    this.debouncePurchase(upgradeId);
-                    requestAnimationFrame(() => {
-                        button.classList.remove('processing');
-                    });
-                }
+          const button = e.target.closest('.upgrade-button');
+          if (button && !button.disabled) {
+            const upgradeId = parseInt(button.dataset.id);
+            if (!isNaN(upgradeId)) {
+              button.classList.add('processing');
+              this.debouncePurchase(upgradeId);
+              requestAnimationFrame(() => {
+                button.classList.remove('processing');
+              });
             }
+          }
         });
-    }
+      }
 
     setupViewButtonListeners() {
         document.querySelectorAll('.view-button').forEach(button => {
@@ -339,15 +348,32 @@ class DoroClicker {
 
     setupStatsEvents() {
         const statsElement = DOMHelper.getStatsElement();
-        document.getElementById('show-stats').addEventListener('click', () => {
+        const showStatsButton = DOMHelper.getShowStatsButton();
+        const closeStatsButton = DOMHelper.getCloseStatsButton();
+    
+        if (!statsElement || !showStatsButton || !closeStatsButton) {
+            console.warn('Stats elements not found');
+            return;
+        }
+    
+        showStatsButton.addEventListener('click', () => {
             const isVisible = window.getComputedStyle(statsElement).display === 'block';
             DOMHelper.toggleVisibility(statsElement, !isVisible);
         });
         
-        document.getElementById('close-stats').addEventListener('click', () => {
+        closeStatsButton.addEventListener('click', () => {
             DOMHelper.toggleVisibility(statsElement, false);
         });
     }
+
+    get sidebarElement() {
+        if (!this._sidebarElement) {
+          this._sidebarElement = document.querySelector('.sidebar');
+        }
+        return this._sidebarElement;
+      }
+    
+
 
     // ======================
     // 7. Utility Methods
