@@ -1,6 +1,6 @@
 name: Unit Tests
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:  
     inputs:
       branch:
         description: 'Branch to test against' 
@@ -13,13 +13,13 @@ on:
       environment:
         description: 'Environment to test'
         required: false
-        default: 'development'
+        default: 'production'
         type: string
 
 jobs:
   unit-tests:
     name: Run Unit Tests
-    timeout-minutes: 15
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
