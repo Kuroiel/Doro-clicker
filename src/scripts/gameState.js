@@ -1,7 +1,6 @@
 export class GameState {
   constructor() {
     this.doros = 0;
-    this.autoclickers = 0; // Track total autoclickers count
     this.manualClicks = 0;
     this.totalAutoDoros = 0;
     this.totalDoros = 0;
@@ -21,15 +20,19 @@ export class GameState {
     this.notify();
   }
 
-  // Add auto-generated Doros
-  addAutoDoros(amount) {
-    // Get the actual DPS value from the autoclicker definition
-    const actualAmount = amount * this.getCurrentDPSMultiplier();
-    this.doros += actualAmount;
-    this.totalAutoDoros += actualAmount;
-    this.totalDoros += actualAmount;
+  addAutoDoros(dpsAmount) {
+    if (typeof dpsAmount !== 'number' || dpsAmount <= 0) {
+        console.error('Invalid DPS amount:', dpsAmount);
+        return;
+    }
+    
+    // Add the full DPS amount each second
+    this.doros += dpsAmount;
+    this.totalAutoDoros += dpsAmount;
+    this.totalDoros += dpsAmount;
     this.notify();
 }
+
   
 
   addListener(callback) {
@@ -55,12 +58,12 @@ export class GameState {
 
     getTotalDPS() {
       if (!this._autoclickers || this._autoclickers.length === 0) return 0;
-    
+  
       let total = 0;
       this._autoclickers.forEach(clicker => {
-        if (clicker && typeof clicker.value === 'number' && typeof clicker.purchased === 'number') {
-          total += clicker.value * clicker.purchased;
-        }
+          if (clicker && typeof clicker.value === 'number' && typeof clicker.purchased === 'number') {
+              total += clicker.value * clicker.purchased;
+          }
       });
       return total * this.globalDpsMultiplier;
     

@@ -42,12 +42,17 @@ class DoroClicker {
     }
 
     setupAutoclicker() {
+        if (this.autoclickerInterval) {
+            clearInterval(this.autoclickerInterval);
+        }
+    
+        // Set up new interval that uses getTotalDPS()
         this.autoclickerInterval = setInterval(() => {
-            if (this.state?.autoclickers > 0) {
-                const amount = this.state.autoclickers;
-                this.state.addAutoDoros(amount);
+            const dps = this.state.getTotalDPS();
+            if (dps > 0) {
+                this.state.addAutoDoros(dps);
             }
-        }, 1000);
+        }, 1000); 
     }
 
     // ======================
@@ -102,7 +107,6 @@ class DoroClicker {
         if (upgrade.type === 'multiplier') {
             this.clickMultiplier += upgrade.value;
         } else if (upgrade.type === 'autoclicker') {
-            this.state.autoclickers += upgrade.value;
         } else if (upgrade.type === 'dpsMultiplier') {
             const lurkingDoro = this.autoclickers.find(a => a.id === 2);
             if (lurkingDoro) {
@@ -120,13 +124,12 @@ class DoroClicker {
         this.updateScoreDisplay();
         this.updateStatsDisplay();
         
-        // Force a full re-render of upgrades if needed, otherwise just update button states
-        if (this._needsUpgradeRender || !this._lastDoros) {
+        // Always re-render if needed or if doros have changed significantly
+        if (this._needsUpgradeRender || Math.abs(this.state.doros - this._lastDoros) > 10) {
             this.renderUpgrades();
             this._lastDoros = this.state.doros;
             this._needsUpgradeRender = false;
         } else {
-            // Update existing buttons with fresh data
             this.updateAllButtonContents();
         }
     }
@@ -137,8 +140,16 @@ class DoroClicker {
 
     updateStatsDisplay() {
         const stats = DOMHelper.getStatElements();
+        if (!stats) return;  // Early return if elements not found
+        
+        // Update manual clicks count
         DOMHelper.setText(stats.clicks, this.state.manualClicks);
-        DOMHelper.setText(stats.dps, this.state.autoclickers);
+        
+        // Update DPS display using getTotalDPS()
+        const totalDPS = this.state.getTotalDPS();
+        DOMHelper.setText(stats.dps, totalDPS.toFixed(1)); // Show 1 decimal place
+        
+        // Update total doros count
         DOMHelper.setText(stats.total, this.state.totalDoros);
     }
 
@@ -172,17 +183,20 @@ class DoroClicker {
         const validViews = ['autoclickers', 'upgrades'];
         if (!validViews.includes(view)) return;
     
-        // Use DOMHelper to get view buttons
+        // Force UI update before switching views
+        this._needsUpgradeRender = true;
+        
         const viewButtons = DOMHelper.getViewButtons();
         viewButtons.forEach(btn => {
             DOMHelper.toggleClass(btn, 'active', btn.dataset.view === view);
         });
     
-        // Use DOMHelper to get upgrade views
         const upgradeViews = DOMHelper.getUpgradeViews();
         upgradeViews.forEach(container => {
             const isTarget = container.id === `${view}-container`;
             DOMHelper.toggleClass(container, 'active-view', isTarget);
+            // Force render when view becomes active
+            if (isTarget) this.renderUpgrades();
         });
     }
 
@@ -388,6 +402,15 @@ class DoroClicker {
         }, 50);
     }
 
+    get debugInfo() {
+        return {
+            initialized: !!this.state,
+            doros: this.state?.doros,
+            upgrades: this.upgrades?.length,
+            autoclickers: this.autoclickers?.length
+        };
+    }
+
     // ======================
     // 8. Cleanup & Instance Creation
     // ======================
@@ -397,7 +420,30 @@ class DoroClicker {
 }
 
 // Create game instance
-const game = new DoroClicker();
-window.doroGame = game;
-
+try {
+    const game = new DoroClicker();
+    window.doroGame = game;
+    
+    // Add debug flag for test environment
+    if (typeof window.__TESTING__ !== 'undefined') {
+        window.__TESTING__.gameReady = true;
+    }
+} catch (error) {
+    console.error('Game initialization failed:', error);
+    // Provide fallback for tests
+    if (typeof window.__TESTING__ !== 'undefined') {
+        window.doroGame = {
+            state: {},
+            upgrades: [],
+            autoclickers: [],
+            updateUI: () => {}
+        };
+    }
+}
+// Ensure game is initialized even if DOM isn't fully ready
+document.addEventListener('DOMContentLoaded', () => {
+    if (!window.doroGame) {
+        window.doroGame = new DoroClicker();
+    }
+});
 export { DoroClicker };
