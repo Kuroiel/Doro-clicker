@@ -1,6 +1,6 @@
 name: Playwright Tests
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
     inputs:
       branch:
         description: 'Branch to test against' 
@@ -10,11 +10,6 @@ on:
         options:
           - main
           - master
-      environment:
-        description: 'Environment to test'
-        required: false
-        default: 'production'
-        type: string
 
 jobs:
   test:
@@ -22,14 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.inputs.branch || github.ref }}  # Use selected branch
-        
     - uses: actions/setup-node@v4
       with:
         node-version: lts/*
         
-    - name: Cache node_modules
+    - name: Cache dependencies
       uses: actions/cache@v3
       with:
         path: |
@@ -38,20 +30,24 @@ jobs:
         key: ${{ runner.os }}-modules-${{ hashFiles('package-lock.json') }}
         
     - name: Install dependencies
-      run: npm ci
-      
-    - name: Install Playwright
-      run: npx playwright install --with-deps chromium
+      run: |
+        npm ci
+        npx playwright install --with-deps chromium
+        npx playwright install-deps
       
     - name: Run Playwright tests
       run: |
         npx playwright test \
-          --workers=2 \
+          --workers=1 \
           --retries=2 \
           --timeout=60000 \
           --project=chromium \
+          --config=playwright.config.js
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
+        PLAYWRIGHT_DISABLE_FORCED_COLORS: 1
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 0
+        DEBUG: playwright:*
         
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}

@@ -3,39 +3,17 @@
  * Updated to match current game mechanics
  */
 import { test, expect } from '@playwright/test';
+import { waitForGameInitialization, resetGameState } from './test-utils';
 
 test.describe('Autoclicker System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
         
-    await expect.poll(async () => {
-      return await page.evaluate(() => {
-        try {
-          const game = window.doroGame;
-          return game && game.state && game.upgrades;
-        } catch (e) {
-          return false;
-        }
-      });
-    }, { 
-      timeout: 10000,
-      message: 'Game failed to initialize within 10 seconds'
-    }).toBeTruthy();
-    
-    // Reset game state
-    await page.evaluate(() => {
-        const game = window.doroGame;
-        game.state.doros = 1000;
-        game.clickMultiplier = 1;
-        
-        // Reset all upgrades and autoclickers
-        game.upgrades.forEach(u => u.purchased = 0);
-        game.autoclickers.forEach(a => {
-            a.purchased = 0;
-            a.value = a.baseDPS;
-        });
-        game.updateUI();
-    });
+    await waitForGameInitialization(page);
+  
+    // Reset to default test state (1000 doros)
+    await resetGameState(page);
+
   });
 
   test('should generate doros from autoclickers', async ({ page }) => {
