@@ -50,7 +50,6 @@ jobs:
           --retries=2 \
           --timeout=60000 \
           --project=chromium \
-          --headed \
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
         
