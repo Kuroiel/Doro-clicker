@@ -33,7 +33,8 @@ export default defineConfig({
     trace: 'on-first-retry',
     contextOptions: {
       // Ensure game is available in window context
-      permissions: ['clipboard-read', 'clipboard-write']
+      permissions: ['clipboard-read', 'clipboard-write'],
+      bypassCSP: true
      },
      video: 'retain-on-failure'
   },

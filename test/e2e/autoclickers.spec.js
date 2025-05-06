@@ -8,11 +8,19 @@ test.describe('Autoclicker System', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
         
-    // Wait for game to be fully initialized
-    await page.waitForFunction(() => {
-        const game = window.doroGame;
-        return game && game.state && game.upgrades;
-    }, { timeout: 10000 });
+    await expect.poll(async () => {
+      return await page.evaluate(() => {
+        try {
+          const game = window.doroGame;
+          return game && game.state && game.upgrades;
+        } catch (e) {
+          return false;
+        }
+      });
+    }, { 
+      timeout: 10000,
+      message: 'Game failed to initialize within 10 seconds'
+    }).toBeTruthy();
     
     // Reset game state
     await page.evaluate(() => {
