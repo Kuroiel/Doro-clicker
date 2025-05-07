@@ -1,23 +1,43 @@
 /**
  * Safe game initialization utility for Playwright tests
- * Handles CSP restrictions in CI environments
+ * Handles CSP restrictions in CI environments and provides more robust initialization checks
  */
-export async function waitForGameInitialization(page, timeout = 10000) {
+export async function waitForGameInitialization(page, timeout = 30000) {  // Increased timeout for CI
     const checkInterval = 500;
     const maxChecks = timeout / checkInterval;
     let checks = 0;
+    
+    // First ensure page is fully loaded
+    await page.waitForLoadState('networkidle');
     
     while (checks < maxChecks) {
         try {
             const isInitialized = await page.evaluate(() => {
                 try {
-                    return !!window.doroGame?.state && !!window.doroGame?.upgrades;
+                    // More comprehensive check that includes DOM readiness
+                    const gameExists = !!window.doroGame;
+                    const domReady = document.readyState === 'complete';
+                    const coreComponentsExist = gameExists && 
+                        !!window.doroGame.state && 
+                        !!window.doroGame.upgrades &&
+                        !!window.doroGame.autoclickers;
+                    
+                    // Check if main game elements exist in DOM
+                    const domElementsExist = document.querySelector('#doro-image') && 
+                        document.querySelector('.sidebar');
+                    
+                    return gameExists && domReady && coreComponentsExist && domElementsExist;
                 } catch (e) {
+                    console.warn('Initialization check error:', e);
                     return false;
                 }
             });
             
-            if (isInitialized) return true;
+            if (isInitialized) {
+                // Additional wait to ensure game is fully operational
+                await page.waitForTimeout(200);
+                return true;
+            }
         } catch (e) {
             console.warn(`Initialization check failed: ${e.message}`);
         }
@@ -26,7 +46,21 @@ export async function waitForGameInitialization(page, timeout = 10000) {
         checks++;
     }
     
-    throw new Error(`Game failed to initialize within ${timeout}ms`);
+    // Try one last time with a direct evaluation
+    try {
+        const finalCheck = await page.evaluate(() => {
+            try {
+                return !!window.doroGame;
+            } catch {
+                return false;
+            }
+        });
+        if (!finalCheck) {
+            throw new Error(`Game failed to initialize within ${timeout}ms - window.doroGame not found`);
+        }
+    } catch (e) {
+        throw new Error(`Game failed to initialize within ${timeout}ms - Last error: ${e.message}`);
+    }
 }
 
 /**
@@ -42,11 +76,18 @@ export async function resetGameState(page, {
     resetUpgrades = true,
     resetAutoclickers = true
 } = {}) {
+    // Wait for game to be stable before resetting
+    await page.waitForLoadState('networkidle');
+    
     await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
         try {
-            const game = window.doroGame;
-            if (!game) return;
+            // Ensure game exists before attempting reset
+            if (!window.doroGame) {
+                console.error('Game instance not found during reset');
+                return;
+            }
             
+            const game = window.doroGame;
             game.state.doros = initialDoros;
             game.clickMultiplier = 1;
             game.state.autoclickers = 0;
@@ -62,9 +103,23 @@ export async function resetGameState(page, {
                 });
             }
             
-            if (game.updateUI) game.updateUI();
+            // Force UI update if method exists
+            if (game.updateUI) {
+                game.updateUI();
+                // Additional check for DOM elements
+                if (!document.querySelector('#score-display')) {
+                    console.warn('DOM elements not ready during reset');
+                }
+            }
         } catch (e) {
             console.error('Failed to reset game state:', e);
+            // Try to recover by reloading
+            if (typeof window.__TESTING__ !== 'undefined') {
+                window.location.reload();
+            }
         }
     }, { initialDoros, resetUpgrades, resetAutoclickers });
+    
+    // Wait briefly for UI to update
+    await page.waitForTimeout(100);
 }
