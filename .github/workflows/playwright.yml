@@ -10,6 +10,10 @@ on:
         options:
           - main
           - master
+      environment:
+          description: 'Environment to test'
+          required: false
+          default: 'production'
 
 jobs:
   test:
