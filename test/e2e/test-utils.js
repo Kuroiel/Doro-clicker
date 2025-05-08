@@ -1,36 +1,40 @@
 /**
  * Universal test utilities for Playwright tests
- * Simplified version with robust initialization checks
+ * Maintains CI/local detection while simplifying initialization
  */
-
+import { expect } from '@playwright/test';
 /**
- * Waits for game to be fully initialized with basic sanity checks
+ * Waits for game to be fully initialized with environment awareness
  * @param {import('@playwright/test').Page} page - Playwright page object
  * @param {number} [timeout=30000] - Timeout in ms (longer for CI)
  */
 export async function waitForGameInitialization(page, timeout = process.env.CI ? 45000 : 30000) {
-    // First ensure page is fully loaded
-    await page.waitForLoadState('networkidle', { timeout: process.env.CI ? 30000 : 15000 });
-
-    // Set test environment flag
-    await page.evaluate(() => {
+    // Set environment flags before loading
+    await page.addInitScript(() => {
         window.__TEST_ENV__ = true;
     });
 
-    // Wait for game object to be available with basic validation
-    await page.waitForFunction(() => {
-        // Basic game object check
-        if (!window.doroGame) return false;
-        
-        // Core component checks
-        return !!window.doroGame.state && 
-               typeof window.doroGame.state.doros === 'number' &&
-               document.querySelector('#doro-image') &&
-               document.querySelector('.sidebar');
-    }, { timeout });
+    try {
+        // Wait for page to fully load
+        await page.waitForLoadState('networkidle', { timeout: process.env.CI ? 30000 : 15000 });
 
-    // Additional short wait for UI stability
-    await page.waitForTimeout(process.env.CI ? 1000 : 500);
+        // Core game check
+        await page.waitForFunction(() => {
+            return window.doroGame && 
+                   window.doroGame.state && 
+                   document.querySelector('#doro-image');
+        }, { timeout });
+
+        // Short stability wait
+        await page.waitForTimeout(500);
+    } catch (error) {
+        if (process.env.CI) {
+            console.warn('Initialization failed, retrying...');
+            await page.reload();
+            return waitForGameInitialization(page, timeout);
+        }
+        throw error;
+    }
 }
 
 /**
@@ -46,24 +50,16 @@ export async function resetGameState(page, {
     resetUpgrades = true,
     resetAutoclickers = true
 } = {}) {
-    // Ensure game is initialized
+    // Ensure game is initialized with environment-appropriate timeout
     await waitForGameInitialization(page);
 
-    // Reset game state through direct access
     await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
         const game = window.doroGame;
-        
-        // Core state reset
         game.state.doros = initialDoros;
-        game.clickMultiplier = 1;
-        game.state.manualClicks = 0;
         
-        // Upgrades reset
         if (resetUpgrades && game.upgrades) {
             game.upgrades.forEach(u => u.purchased = 0);
         }
-        
-        // Autoclickers reset
         if (resetAutoclickers && game.autoclickers) {
             game.autoclickers.forEach(a => {
                 a.purchased = 0;
@@ -71,12 +67,11 @@ export async function resetGameState(page, {
             });
         }
         
-        // Trigger UI update if available
         if (typeof game.updateUI === 'function') {
             game.updateUI();
         }
     }, { initialDoros, resetUpgrades, resetAutoclickers });
 
-    // Verify reset was successful
+    // Verify reset - now using properly imported expect
     await expect(page.locator('#score-display')).toContainText(`Doros: ${initialDoros}`);
 }

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to test against' 
+        description: 'Branch to test against'
         required: true
         default: 'main'
         type: choice
@@ -18,21 +18,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # Add retry logic for GitHub Pages deployment lag
-    - name: Wait for GitHub Pages deployment
+    # Simplified deployment check
+    - name: Verify GitHub Pages Availability
       run: |
-        MAX_RETRIES=10
-        RETRY_DELAY=30
-        for i in $(seq 1 $MAX_RETRIES); do
-          if curl -s -f https://kuroiel.github.io/Doro-clicker/ > /dev/null; then
-            echo "GitHub Pages is available"
-            exit 0
-          fi
-          echo "Waiting for GitHub Pages deployment... Attempt $i/$MAX_RETRIES"
-          sleep $RETRY_DELAY
-        done
-        echo "GitHub Pages did not become available after $MAX_RETRIES attempts"
-        exit 1
+        if ! curl -s -f https://kuroiel.github.io/Doro-clicker/ > /dev/null; then
+          echo "GitHub Pages not available"
+          exit 1
+        fi
         
     - uses: actions/setup-node@v4
       with:
@@ -50,33 +42,15 @@ jobs:
       run: |
         npm ci
         npx playwright install --with-deps chromium
-        npx playwright install-deps
       
     - name: Run Playwright tests
-      run: |
-        # Add retries for the test command itself
-        MAX_TEST_RETRIES=3
-        for i in $(seq 1 $MAX_TEST_RETRIES); do
-          npx playwright test \
-            --workers=1 \
-            --retries=2 \
-            --timeout=60000 \
-            --project=chromium \
-            --config=playwright.config.js && exit 0
-          echo "Test attempt $i failed. Retrying..."
-          sleep 10
-        done
-        exit 1
+      run: npx playwright test --workers=1 --project=chromium
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
-        PLAYWRIGHT_DISABLE_FORCED_COLORS: 1
-        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 0
-        DEBUG: playwright:*
-        # Add GitHub Pages specific timeout
         PLAYWRIGHT_TEST_TIMEOUT: 60000
         
     - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
+      if: always()
       with:
         name: playwright-report
         path: playwright-report/
