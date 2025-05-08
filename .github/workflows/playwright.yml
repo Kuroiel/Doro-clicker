@@ -13,16 +13,19 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 20
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     
     # Simplified deployment check
-    - name: Verify GitHub Pages Availability
+    - name: Verify Exact Page URL
       run: |
-        if ! curl -s -f https://kuroiel.github.io/Doro-clicker/ > /dev/null; then
-          echo "GitHub Pages not available"
+        TEST_URL="https://kuroiel.github.io/Doro-clicker/"
+        echo "Testing URL: $TEST_URL"
+        if ! curl -sSf "$TEST_URL" >/dev/null 2>&1; then
+          echo "::error::Failed to access $TEST_URL"
+          curl -v "$TEST_URL" || true
           exit 1
         fi
         
@@ -47,7 +50,7 @@ jobs:
       run: npx playwright test --workers=1 --project=chromium
       env: 
         E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
-        PLAYWRIGHT_TEST_TIMEOUT: 60000
+        PLAYWRIGHT_TEST_TIMEOUT: 30000
         
     - uses: actions/upload-artifact@v4
       if: always()

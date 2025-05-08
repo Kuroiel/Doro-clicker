@@ -5,8 +5,8 @@ import { test, expect } from '@playwright/test';
 import { waitForGameInitialization, resetGameState } from './test-utils';
 
 test.describe('Basic Game Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+  test.beforeEach(async ({ page, baseURL }) => {
+    await page.goto(baseURL);
         
     await waitForGameInitialization(page);
     

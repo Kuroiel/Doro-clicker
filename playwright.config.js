@@ -1,6 +1,13 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
 
+function getBasePath() {
+  if (process.env.E2E_BASE_URL) {
+    return new URL(process.env.E2E_BASE_URL).pathname;
+  }
+  return ''; // Empty path for local development
+}
+
 export default defineConfig({
   testDir: './test/e2e',
   fullyParallel: false,
@@ -10,7 +17,7 @@ export default defineConfig({
   reporter: 'html',
   
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:5500',
+    baseURL: (process.env.E2E_BASE_URL || 'http://127.0.0.1:5500'),
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     
