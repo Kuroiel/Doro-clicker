@@ -1,77 +1,67 @@
 /**
- * Universal test utilities for Playwright tests
- * Maintains CI/local detection while simplifying initialization
+ * Optimized test utilities with fast-fail behavior
+ * Maintains core functionality while reducing wait times
  */
 import { expect } from '@playwright/test';
+
 /**
- * Waits for game to be fully initialized with environment awareness
+ * Fast initialization check with minimal waits
  * @param {import('@playwright/test').Page} page - Playwright page object
- * @param {number} [timeout=30000] - Timeout in ms (longer for CI)
+ * @param {number} [timeout=10000] - Aggressive timeout (5s for CI)
  */
-export async function waitForGameInitialization(page, timeout = process.env.CI ? 45000 : 30000) {
-    // Set environment flags before loading
+export async function waitForGameInitialization(page, timeout = process.env.CI ? 5000 : 3000) {
+    // Set test flag immediately
     await page.addInitScript(() => {
         window.__TEST_ENV__ = true;
     });
 
+    // Fast load check with hard timeout
     try {
-        // Wait for page to fully load
-        await page.waitForLoadState('networkidle', { timeout: process.env.CI ? 30000 : 15000 });
+        await Promise.race([
+            page.waitForLoadState('networkidle'),
+            new Promise((_, reject) => setTimeout(
+                () => reject(new Error('Page load timeout')),
+                timeout
+            ))
+        ]);
 
-        // Core game check
-        await page.waitForFunction(() => {
-            return window.doroGame && 
-                   window.doroGame.state && 
-                   document.querySelector('#doro-image');
-        }, { timeout });
+        // Direct game check without excessive waiting
+        await expect(page.locator('#doro-image')).toBeVisible({ timeout });
+        await expect(page).toHaveTitle('Doro Clicker', { timeout });
 
-        // Short stability wait
-        await page.waitForTimeout(500);
+        // Verify core game state exists
+        await page.waitForFunction(() => window.doroGame?.state, null, { timeout });
+        
     } catch (error) {
-        if (process.env.CI) {
-            console.warn('Initialization failed, retrying...');
-            await page.reload();
-            return waitForGameInitialization(page, timeout);
-        }
-        throw error;
+        console.error(`Initialization failed: ${error.message}`);
+        throw error; // Fail fast
     }
 }
 
 /**
- * Resets game state to known test conditions
+ * Optimized state reset with immediate validation
  * @param {import('@playwright/test').Page} page - Playwright page object
  * @param {object} [options] - Reset options
- * @param {number} [options.initialDoros=1000] - Initial doros count
- * @param {boolean} [options.resetUpgrades=true] - Whether to reset upgrades
- * @param {boolean} [options.resetAutoclickers=true] - Whether to reset autoclickers
  */
 export async function resetGameState(page, {
     initialDoros = 1000,
     resetUpgrades = true,
     resetAutoclickers = true
 } = {}) {
-    // Ensure game is initialized with environment-appropriate timeout
-    await waitForGameInitialization(page);
+    // Verify we're starting from initialized state
+    await expect(page.locator('#doro-image')).toBeVisible();
 
+    // Execute reset with immediate verification
     await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
         const game = window.doroGame;
         game.state.doros = initialDoros;
         
-        if (resetUpgrades && game.upgrades) {
-            game.upgrades.forEach(u => u.purchased = 0);
-        }
-        if (resetAutoclickers && game.autoclickers) {
-            game.autoclickers.forEach(a => {
-                a.purchased = 0;
-                a.value = a.baseDPS;
-            });
-        }
+        if (resetUpgrades) game.upgrades?.forEach(u => u.purchased = 0);
+        if (resetAutoclickers) game.autoclickers?.forEach(a => a.purchased = 0);
         
-        if (typeof game.updateUI === 'function') {
-            game.updateUI();
-        }
+        game.updateUI?.();
     }, { initialDoros, resetUpgrades, resetAutoclickers });
 
-    // Verify reset - now using properly imported expect
-    await expect(page.locator('#score-display')).toContainText(`Doros: ${initialDoros}`);
+    // Immediate state verification
+    await expect(page.locator('#score-display')).toContainText(`Doros: ${initialDoros}`, { timeout: 2000 });
 }
