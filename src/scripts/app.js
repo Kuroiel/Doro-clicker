@@ -79,7 +79,7 @@ class DoroClicker {
             }
     
             if (!this.canAfford(upgrade)) {
-                console.debug(`Purchase prevented - revalidation failed`);
+    //            console.debug(`Purchase prevented - revalidation failed`);
                 return false;
             }
     
@@ -241,17 +241,26 @@ class DoroClicker {
                 if (typeof upgrade.isVisible !== 'function') {
                     // Always visible if no visibility check
                     visibleUpgrades.push(upgrade);
-                } else {
-                    // Pass the game instance to visibility check
-                    const isVisible = upgrade.isVisible({
-                        autoclickers: this.autoclickers,
-                        getTotalDPS: () => this.state.getTotalDPS()
-                    });
-                    
-                    if (isVisible) {
-                        hiddenUpgrades.push(upgrade);
-                    }
+                    return;
                 }
+    
+                // Create complete game state context for visibility check
+                const gameStateContext = {
+                    autoclickers: this.autoclickers,
+                    getTotalDPS: () => this.state.getTotalDPS(),
+                    state: this.state,
+                    upgrades: this.upgrades
+                };
+                
+                const isVisible = upgrade.isVisible(gameStateContext);
+                
+                if (isVisible) {
+                    visibleUpgrades.push(upgrade);
+                } else if (upgrade.purchased > 0) {
+                    // Only show in hidden if already purchased
+                    hiddenUpgrades.push(upgrade);
+                }
+                // Otherwise don't show at all
             } catch (error) {
                 console.error(`Error checking visibility for upgrade ${upgrade.id}:`, error);
                 // Default to visible if there's an error

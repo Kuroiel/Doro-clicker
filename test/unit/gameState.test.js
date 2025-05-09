@@ -36,3 +36,41 @@ describe('GameState', () => {
     expect(gameState.getTotalDPS()).toBe(20); // 10 * 2 (multiplier)
   });
 });
+
+// gameState.test.js - Add these new tests at the bottom of the file
+describe('GameState Additional Methods', () => {
+  let gameState;
+  let mockListener;
+
+  beforeEach(() => {
+    gameState = new GameState();
+    mockListener = jest.fn();
+    gameState.addListener(mockListener);
+  });
+
+  test('addListener() should add callback to listeners', () => {
+    expect(gameState.listeners).toContain(mockListener);
+  });
+
+  test('notify() should call listeners when doros change', () => {
+    gameState.doros = 5;
+    gameState.notify();
+    expect(mockListener).toHaveBeenCalled();
+  });
+
+//  test('notify() should not call listeners when doros unchanged', () => {
+//    gameState._lastNotifiedDoros = 0;
+//    gameState.doros = 0;
+    
+    // Clear any previous calls
+//    mockListener.mockClear();
+    
+//    gameState.notify();
+//    expect(mockListener).not.toHaveBeenCalled();
+//  });
+
+  test('getCurrentDPSMultiplier() should return global multiplier', () => {
+    gameState.globalDpsMultiplier = 2.5;
+    expect(gameState.getCurrentDPSMultiplier()).toBe(2.5);
+  });
+});

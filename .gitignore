@@ -1,6 +1,7 @@
 .qodo
 test-results
 playwright-report
+coverage
 
 # Playwright
 node_modules/

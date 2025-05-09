@@ -15,7 +15,7 @@ export const upgrades = [
             return Math.round(this.baseCost * Math.pow(10, this.purchased));
         }
     },
-    // Add new Lurking Doro upgrade
+
     {
         id: 3,
         name: "Lurking Doro Upgrade",
@@ -31,18 +31,19 @@ export const upgrades = [
             const costLevels = [500, 10000, 3000000, 10000000];
             return costLevels[Math.min(this.purchased, costLevels.length - 1)];
         },
-        // Improved visibility check
         isVisible: function(gameState) {
-            const lurkingDoros = gameState.autoclickers;
+            // Only show if there are purchased Lurking Doros
+            const lurkingDoro = gameState.autoclickers.find(a => a.id === 2);
+            if (!lurkingDoro || lurkingDoro.purchased <= 0) return false;
+            
             const thresholds = [10, 20, 50, 100];
             const nextThreshold = thresholds[this.purchased];
             
-            // Only show if:
-            // 1. We haven't purchased all upgrades yet
-            // 2. We've reached the next threshold
+            // Only show if we haven't maxed out purchases and threshold is met
             return this.purchased < thresholds.length && 
-                   lurkingDoros >= nextThreshold;
-        }
+                   lurkingDoro.purchased >= nextThreshold;
+        },
+        priority: 1
     },
     {
         id: 5, // Using ID 5 to avoid conflicts with existing upgrades
