@@ -135,22 +135,24 @@ class DoroClicker {
     }
 
     updateScoreDisplay() {
-        DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
+    // Always format doros as whole number with thousand separators
+    const formattedDoros = this.formatNumber(Math.floor(this.state.doros), 0, 1000000, true);
+    DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${formattedDoros}`);
     }
 
     updateStatsDisplay() {
         const stats = DOMHelper.getStatElements();
         if (!stats) return;  // Early return if elements not found
         
-        // Update manual clicks count
-        DOMHelper.setText(stats.clicks, this.state.manualClicks);
+        // Update manual clicks count with thousand separators
+        DOMHelper.setText(stats.clicks, this.formatNumber(this.state.manualClicks));
         
-        // Update DPS display using getTotalDPS()
+        // Update DPS display with 1 decimal place and thousand separators
         const totalDPS = this.state.getTotalDPS();
-        DOMHelper.setText(stats.dps, totalDPS.toFixed(1)); // Show 1 decimal place
+        DOMHelper.setText(stats.dps, this.formatNumber(totalDPS, 1));
         
-        // Update total doros count
-        DOMHelper.setText(stats.total, this.state.totalDoros);
+        // Update total doros count with thousand separators
+        DOMHelper.setText(stats.total, this.formatNumber(Math.floor(this.state.totalDoros)));
     }
 
     updateAllButtonContents() {
@@ -161,17 +163,19 @@ class DoroClicker {
                            this.upgrades.find(u => u.id === upgradeId);
             
             if (upgrade) {
-                // Update button content while preserving its structure
+                // Create a consistent formatter function with fixed parameters
+                const consistentFormatter = (num, decimals = 0) => 
+                    this.formatNumber(num, decimals, 1000000, decimals === 0);
+                
                 const canAfford = this.canAfford(upgrade);
                 const newContent = `
                     <div class="upgrade-header">
                         ${UpgradeRenderer.renderFirstLine(upgrade)}
                     </div>
-                    ${UpgradeRenderer.renderSecondLine(upgrade)}
-                    ${UpgradeRenderer.renderTooltip(upgrade)}
+                    ${UpgradeRenderer.renderSecondLine(upgrade, consistentFormatter)}
+                    ${UpgradeRenderer.renderTooltip(upgrade, consistentFormatter)}
                 `;
                 
-                // Only replace inner content to avoid button recreation
                 button.innerHTML = newContent;
                 button.classList.toggle('affordable', canAfford);
                 button.disabled = !canAfford;
@@ -210,25 +214,25 @@ class DoroClicker {
         if (autoContainer) autoContainer.innerHTML = '';
         if (upgradeContainer) upgradeContainer.innerHTML = '';
     
-        // Render autoclickers with fresh data
+        // Create consistent formatter for all upgrades
+        const consistentFormatter = (num, decimals = 0) => 
+            this.formatNumber(num, decimals, 1000000, decimals === 0);
+    
+        // Render autoclickers
         this.autoclickers.forEach(upgrade => {
             const canAfford = this.canAfford(upgrade);
             autoContainer.insertAdjacentHTML('beforeend', 
-                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford));
+                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
         });
         
-        // Process and render upgrades with fresh data
+        // Render upgrades
         const { visibleUpgrades, hiddenUpgrades } = this.sortUpgrades();
-        
-        // Combine visible and hidden upgrades that should be shown
-        const allUpgrades = [...visibleUpgrades, ...hiddenUpgrades];
-        allUpgrades.forEach(upgrade => {
+        [...visibleUpgrades, ...hiddenUpgrades].forEach(upgrade => {
             const canAfford = this.canAfford(upgrade);
             upgradeContainer.insertAdjacentHTML('beforeend', 
-                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford));
+                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
         });
     
-        // Ensure stats are updated
         this.updateStatsDisplay();
     }
 
@@ -276,7 +280,12 @@ class DoroClicker {
 
     renderUpgradeButton(upgrade) {
         const canAfford = this.canAfford(upgrade);
-        return UpgradeRenderer.renderUpgradeButton(upgrade, canAfford);
+        // Pass the formatNumber method to the renderer for consistent formatting
+        return UpgradeRenderer.renderUpgradeButton(
+            upgrade, 
+            canAfford,
+            (num, decimals) => this.formatNumber(num, decimals)
+        );
     }
     
     canAfford(upgrade) {
@@ -420,6 +429,37 @@ class DoroClicker {
         };
     }
 
+    formatNumber(num, decimalPlaces = 0, scientificThreshold = 1000000, roundDown = false) {
+        // Handle invalid inputs
+        if (typeof num !== 'number' || isNaN(num)) {
+            console.warn('Invalid number passed to formatNumber:', num);
+            return '0';
+        }
+    
+        // Apply rounding if requested
+        let processedNum = roundDown ? Math.floor(num) : num;
+        
+        // For very large numbers, use scientific notation
+        if (Math.abs(processedNum) >= scientificThreshold) {
+            return processedNum.toExponential(2);
+        }
+    
+        // Manual thousand separator implementation for consistency
+        const parts = processedNum.toFixed(decimalPlaces).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+        return parts.length > 1 ? parts.join('.') : parts[0];
+    }
+
+    formatUpgradeCost(cost) {
+        try {
+            const costValue = typeof cost === 'function' ? cost() : cost;
+            return this.formatNumber(costValue, 0, 1000000, true); // Whole numbers, floor values
+        } catch (error) {
+            console.error('Error formatting upgrade cost:', error);
+            return '0';
+        }
+    }
     // ======================
     // 8. Cleanup & Instance Creation
     // ======================

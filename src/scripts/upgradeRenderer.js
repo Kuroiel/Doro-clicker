@@ -7,7 +7,7 @@ export class UpgradeRenderer {
      * @param {Object} upgrade - The upgrade object
      * @returns {string} HTML string for the first line
      */
-    static renderFirstLine(upgrade) {
+    static renderFirstLine(upgrade, formatter) {
         if (!upgrade.icon) return `<span>${upgrade.name}</span>`;
         
         return `
@@ -23,14 +23,26 @@ export class UpgradeRenderer {
      * @param {Object} upgrade - The upgrade object
      * @returns {string} HTML string for the second line
      */
-    static renderSecondLine(upgrade) {
+    static renderSecondLine(upgrade, formatter) {
         const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
+        // Force consistent formatting - whole numbers with thousand separators
+        const formattedCost = formatter ? formatter(cost, 0) : this.fallbackFormat(cost, 0);
+        
         return `
             <div class="upgrade-second-line">
-                <span>Cost: ${cost} Doros</span>
-                ${upgrade.type === 'autoclicker' ? `<span>(Owned: ${upgrade.purchased})</span>` : ''}
+                <span>Cost: ${formattedCost} Doros</span>
+                ${upgrade.type === 'autoclicker' ? 
+                    `<span>(Owned: ${formatter ? formatter(upgrade.purchased, 0) : upgrade.purchased})</span>` : 
+                    ''}
             </div>
         `;
+    }
+    
+    // Fallback formatting when no formatter provided
+    static fallbackFormat(num, decimals) {
+        const parts = num.toFixed(decimals).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
     }
 
     /**
@@ -38,12 +50,20 @@ export class UpgradeRenderer {
      * @param {Object} upgrade - The upgrade object
      * @returns {string} HTML string for the tooltip
      */
-    static renderTooltip(upgrade) {
+    static renderTooltip(upgrade, formatter) {
         if (!upgrade.description || !upgrade.effectDescription) return '';
     
-        // Convert newlines to <br> tags in effect description
+        // Format numbers in effect description with max 1 decimal place
+        const formatForTooltip = (num) => {
+            const decimals = Math.min(1, (num.toString().split('.')[1] || '').length);
+            return formatter ? formatter(num, decimals) : num.toFixed(decimals);
+        };
+    
         const effectText = typeof upgrade.effectDescription === 'function' 
-            ? upgrade.effectDescription(upgrade.value, upgrade.purchased)
+            ? upgrade.effectDescription(
+                formatter ? formatForTooltip(upgrade.value) : upgrade.value,
+                upgrade.purchased
+              )
             : upgrade.effectDescription;
         
         const formattedEffect = effectText.replace(/\n/g, '<br>');
@@ -62,7 +82,7 @@ export class UpgradeRenderer {
      * @param {boolean} canAfford - Whether the player can afford the upgrade
      * @returns {string} HTML string for the complete button
      */
-    static renderUpgradeButton(upgrade, canAfford) {
+    static renderUpgradeButton(upgrade, canAfford, formatter) {
         return `
         <button 
             class="upgrade-button ${canAfford ? 'affordable' : ''}"
@@ -70,10 +90,10 @@ export class UpgradeRenderer {
             ${!canAfford ? 'disabled' : ''}
         >
             <div class="upgrade-header">
-                ${this.renderFirstLine(upgrade)}
+                ${this.renderFirstLine(upgrade, formatter)}
             </div>
-            ${this.renderSecondLine(upgrade)}
-            ${this.renderTooltip(upgrade)}
+            ${this.renderSecondLine(upgrade, formatter)}
+            ${this.renderTooltip(upgrade, formatter)}
         </button>
         `;
     }
