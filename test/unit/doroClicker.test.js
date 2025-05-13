@@ -449,3 +449,67 @@ describe('Sorting Upgrades', () => {
       expect(result.visibleUpgrades[0].id).toBe(1);
   });
 });
+
+// Add to app.test.js (new file or add to existing test file)
+describe('Number Formatting', () => {
+  let game;
+
+  beforeEach(() => {
+    game = new DoroClicker();
+  });
+
+  test('formatNumber() should add thousand separators', () => {
+    expect(game.formatNumber(1000)).toBe('1,000');
+    expect(game.formatNumber(1234567)).toBe('1,234,567');
+  });
+
+  test('formatNumber() should handle decimal places', () => {
+    expect(game.formatNumber(1234.567, 2)).toBe('1,234.57');
+    expect(game.formatNumber(1234.5, 2)).toBe('1,234.50');
+  });
+
+  test('formatNumber() should use scientific notation for large numbers', () => {
+    expect(game.formatNumber(1000000)).toBe('1.00e+6');
+    expect(game.formatNumber(1234567890)).toBe('1.23e+9');
+  });
+
+  test('formatNumber() should handle edge cases', () => {
+    expect(game.formatNumber(null)).toBe('0');
+    expect(game.formatNumber(undefined)).toBe('0');
+    expect(game.formatNumber('not a number')).toBe('0');
+    expect(game.formatNumber(999999)).toBe('999,999'); // Just below threshold
+  });
+
+  test('formatUpgradeCost() should format costs consistently', () => {
+    expect(game.formatUpgradeCost(1000)).toBe('1,000');
+    expect(game.formatUpgradeCost(() => 1000)).toBe('1,000');
+    expect(game.formatUpgradeCost(1000000)).toBe('1.00e+6');
+  });
+});
+
+// Add to doroClicker.test.js
+describe('Formatting Integration', () => {
+  test('updateScoreDisplay() should format numbers', () => {
+    const game = new DoroClicker();
+    game.state.doros = 1234567;
+    DOMHelper.setText = jest.fn();
+    
+    game.updateScoreDisplay();
+    
+    expect(DOMHelper.setText).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.stringContaining('1,234,567')
+    );
+  });
+
+  test('renderUpgrades() should pass formatter to buttons', () => {
+    const game = new DoroClicker();
+    game.renderUpgrades();
+    
+    // Verify formatter was passed to render calls
+    expect(autoContainerMock.insertAdjacentHTML).toHaveBeenCalledWith(
+      'beforeend',
+      expect.stringContaining('1,000')
+    );
+  });
+});

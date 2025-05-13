@@ -57,6 +57,7 @@ export async function resetGameState(page, {
         game.updateUI?.();
     }, { initialDoros, resetUpgrades, resetAutoclickers });
 
-    // Immediate state verification
-    await expect(page.locator('#score-display')).toContainText(`Doros: ${initialDoros}`, { timeout: 2000 });
+    // Updated verification to handle formatted numbers with thousand separators
+    const formattedDoros = initialDoros.toLocaleString();
+    await expect(page.locator('#score-display')).toContainText(`Doros: ${formattedDoros}`, { timeout: 2000 });
 }

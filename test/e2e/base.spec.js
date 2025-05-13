@@ -47,7 +47,7 @@ test.describe('Basic Game Functionality', () => {
     expect(manualClicks).toBe(1);
     
     // Verify UI reflects changes
-    await expect(page.locator('#score-display')).toContainText('Doros: 1001');
+    await expect(page.locator('#score-display')).toContainText('Doros: 1,001');
     await expect(page.locator('#stat-clicks')).toContainText('1');
   });
 

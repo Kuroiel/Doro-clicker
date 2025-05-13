@@ -11,8 +11,10 @@ describe('UpgradeRenderer', () => {
     icon: 'test-icon.png',
     description: 'Test description',
     effectDescription: 'Test effect',
-    cost: () => 10
+    cost: () => 1000
   };
+
+  const mockFormatter = (num) => num.toLocaleString();
 
   describe('renderFirstLine()', () => {
     test('should render with icon when available', () => {
@@ -42,6 +44,16 @@ describe('UpgradeRenderer', () => {
       expect(result).toContain('Cost: 10 Doros');
       expect(result).not.toContain('Owned:');
     });
+
+    test('should use formatter when provided', () => {
+      const result = UpgradeRenderer.renderSecondLine(mockUpgrade, mockFormatter);
+      expect(result).toContain('Cost: 1,000 Doros');
+    });
+
+    test('should fallback to raw number without formatter', () => {
+      const result = UpgradeRenderer.renderSecondLine(mockUpgrade);
+      expect(result).toContain('Cost: 1000 Doros');
+    });
   });
 
   describe('renderTooltip()', () => {
@@ -58,6 +70,16 @@ describe('UpgradeRenderer', () => {
       };
       const result = UpgradeRenderer.renderTooltip(funcUpgrade);
       expect(result).toContain('Dynamic effect');
+    });
+
+    test('should format numbers in tooltip', () => {
+      const valueUpgrade = {
+        ...mockUpgrade,
+        value: 1000,
+        effectDescription: (val) => `Value: ${val}`
+      };
+      const result = UpgradeRenderer.renderTooltip(valueUpgrade, mockFormatter);
+      expect(result).toContain('Value: 1,000');
     });
   });
 
@@ -76,4 +98,18 @@ describe('UpgradeRenderer', () => {
       expect(result).not.toContain('affordable');
     });
   });
+
+  describe('fallbackFormat()', () => {
+    test('should add thousand separators', () => {
+      const result = UpgradeRenderer.fallbackFormat(1000, 0);
+      expect(result).toBe('1,000');
+    });
+
+    test('should handle decimals', () => {
+      const result = UpgradeRenderer.fallbackFormat(1234.56, 2);
+      expect(result).toBe('1,234.56');
+    });
+  });
+
 });
+
