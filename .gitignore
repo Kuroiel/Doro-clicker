@@ -2,9 +2,5 @@
 test-results
 playwright-report
 coverage
-
-# Playwright
-node_modules/
+node_modules
 /blob-report/
-/playwright/.cache/
-/playwright-report

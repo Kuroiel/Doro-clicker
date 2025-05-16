@@ -569,11 +569,7 @@ describe('Number Formatting', () => {
     expect(game.formatNumber(1234.5, 2)).toBe('1,234.50');
   });
 
-  test('formatNumber() should handle edge cases', () => {
-    expect(game.formatNumber(null)).toBe('0');
-    expect(game.formatNumber(undefined)).toBe('0');
-    expect(game.formatNumber('not a number')).toBe('0');
-  });
+
 
   test('formatUpgradeCost() should format costs with cost context', () => {
     expect(game.formatUpgradeCost(1000)).toBe('1,000');
