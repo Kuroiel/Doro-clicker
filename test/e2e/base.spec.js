@@ -46,10 +46,10 @@ test.describe('Basic Game Functionality', () => {
     const manualClicks = await page.evaluate(() => window.doroGame.state.manualClicks);
     expect(manualClicks).toBe(1);
     
-    // Verify UI reflects changes
+    // Verify UI reflects changes (now expecting formatted number with thousand separator)
     await expect(page.locator('#score-display')).toContainText('Doros: 1,001');
     await expect(page.locator('#stat-clicks')).toContainText('1');
-  });
+});
 
   test('should handle stats overlay visibility', async ({ page }) => {
     // Verify overlay starts hidden

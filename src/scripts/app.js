@@ -25,6 +25,8 @@ class DoroClicker {
         this._purchaseDebounce = false;
         this._sidebarElement = null;
         
+        this._isRendering = false;
+
         // Setup game systems
         this.setupAutoclicker();
         this.init();
@@ -61,7 +63,8 @@ class DoroClicker {
     handleClick() {
         this.state.manualClicks++;
         this.state.increment(this.clickMultiplier);
-        DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${this.state.doros}`);
+        // Replace direct DOM update with centralized score display update
+        this.updateScoreDisplay();
     }
 
     purchaseUpgrade(upgradeId) {
@@ -134,25 +137,26 @@ class DoroClicker {
         }
     }
 
-    updateScoreDisplay() {
-    // Always format doros as whole number with thousand separators
-    const formattedDoros = this.formatNumber(Math.floor(this.state.doros), 0, 1000000, true);
+/**
+ * Updates the main score display with properly formatted doros value
+ * Formats as whole number with thousand separators for readability
+ * Uses scientific notation for very large numbers (≥1,000,000)
+ */
+updateScoreDisplay() {
+    const formattedDoros = this.formatNumber(Math.floor(this.state.doros), 0, null, true, 'score');
     DOMHelper.setText(DOMHelper.getScoreElement(), `Doros: ${formattedDoros}`);
-    }
+}
 
     updateStatsDisplay() {
         const stats = DOMHelper.getStatElements();
-        if (!stats) return;  // Early return if elements not found
+        if (!stats) return;
         
-        // Update manual clicks count with thousand separators
-        DOMHelper.setText(stats.clicks, this.formatNumber(this.state.manualClicks));
+        DOMHelper.setText(stats.clicks, this.formatNumber(this.state.manualClicks, 0, null, false, 'default'));
         
-        // Update DPS display with 1 decimal place and thousand separators
         const totalDPS = this.state.getTotalDPS();
-        DOMHelper.setText(stats.dps, this.formatNumber(totalDPS, 1));
+        DOMHelper.setText(stats.dps, this.formatNumber(totalDPS, 1, null, false, 'dps'));
         
-        // Update total doros count with thousand separators
-        DOMHelper.setText(stats.total, this.formatNumber(Math.floor(this.state.totalDoros)));
+        DOMHelper.setText(stats.total, this.formatNumber(Math.floor(this.state.totalDoros), 0, null, true, 'default'));
     }
 
     updateAllButtonContents() {
@@ -165,7 +169,7 @@ class DoroClicker {
             if (upgrade) {
                 // Create a consistent formatter function with fixed parameters
                 const consistentFormatter = (num, decimals = 0) => 
-                    this.formatNumber(num, decimals, 1000000, decimals === 0);
+                    this.formatNumber(num, decimals, null, decimals === 0, 'cost');
                 
                 const canAfford = this.canAfford(upgrade);
                 const newContent = `
@@ -208,33 +212,42 @@ class DoroClicker {
     // 5. Upgrade Management
     // ======================
     renderUpgrades() {
-        const autoContainer = DOMHelper.getAutoclickersContainer();
-        const upgradeContainer = DOMHelper.getUpgradesContainer();
-    
-        if (autoContainer) autoContainer.innerHTML = '';
-        if (upgradeContainer) upgradeContainer.innerHTML = '';
-    
-        // Create consistent formatter for all upgrades
-        const consistentFormatter = (num, decimals = 0) => 
-            this.formatNumber(num, decimals, 1000000, decimals === 0);
-    
-        // Render autoclickers
-        this.autoclickers.forEach(upgrade => {
-            const canAfford = this.canAfford(upgrade);
-            autoContainer.insertAdjacentHTML('beforeend', 
-                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
-        });
+        if (this._isRendering) return;
+        this._isRendering = true;
+
+        try {
+            const autoContainer = DOMHelper.getAutoclickersContainer();
+            const upgradeContainer = DOMHelper.getUpgradesContainer();
         
-        // Render upgrades
-        const { visibleUpgrades, hiddenUpgrades } = this.sortUpgrades();
-        [...visibleUpgrades, ...hiddenUpgrades].forEach(upgrade => {
-            const canAfford = this.canAfford(upgrade);
-            upgradeContainer.insertAdjacentHTML('beforeend', 
-                UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
-        });
-    
-        this.updateStatsDisplay();
+            // Clear containers first
+            if (autoContainer) autoContainer.innerHTML = '';
+            if (upgradeContainer) upgradeContainer.innerHTML = '';
+        
+            // Create consistent formatter for all upgrades with 'cost' context
+            const consistentFormatter = (num, decimals = 0) => 
+                this.formatNumber(num, decimals, null, decimals === 0, 'cost');
+        
+            // Render autoclickers only in autoclickers container
+            this.autoclickers.forEach(upgrade => {
+                const canAfford = this.canAfford(upgrade);
+                autoContainer.insertAdjacentHTML('beforeend', 
+                    UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
+            });
+            
+            // Sort and render upgrades only in upgrades container
+            const { visibleUpgrades, hiddenUpgrades } = this.sortUpgrades();
+            [...visibleUpgrades, ...hiddenUpgrades].forEach(upgrade => {
+                const canAfford = this.canAfford(upgrade);
+                upgradeContainer.insertAdjacentHTML('beforeend', 
+                    UpgradeRenderer.renderUpgradeButton(upgrade, canAfford, consistentFormatter));
+            });
+        
+            this.updateStatsDisplay();
+        } finally {
+            this._isRendering = false;
+        }
     }
+    
 
     sortUpgrades() {
         const visibleUpgrades = [];
@@ -332,6 +345,7 @@ class DoroClicker {
         this.setupDoroImageListeners();
         this.setupUpgradeButtonListeners();
         this.setupViewButtonListeners();
+        this.setupStatsEvents(); 
     }
 
     setupDoroImageListeners() {
@@ -429,32 +443,64 @@ class DoroClicker {
         };
     }
 
-    formatNumber(num, decimalPlaces = 0, scientificThreshold = 1000000, roundDown = false) {
-        // Handle invalid inputs
-        if (typeof num !== 'number' || isNaN(num)) {
-            console.warn('Invalid number passed to formatNumber:', num);
+    formatNumber(num, decimalPlaces = 0, scientificThreshold = null, roundDown = false, context = 'default') {
+        // Handle invalid inputs more robustly
+        if (num === null || num === undefined || typeof num !== 'number' || isNaN(num)) {
             return '0';
+        }
+    
+        // Determine scientific notation threshold based on context
+        let threshold;
+        switch(context.toLowerCase()) {
+            case 'score':
+                threshold = 1000000000; // 1,000,000,000 for score display
+                break;
+            case 'cost':
+                threshold = 1000000; // 1,000,000 for costs
+                break;
+            case 'dps':
+                threshold = 100000; // 100,000 for DPS display
+                break;
+            default:
+                threshold = 1000000; // Default threshold
+        }
+        
+        // Override with explicit threshold if provided
+        if (scientificThreshold !== null) {
+            threshold = scientificThreshold;
         }
     
         // Apply rounding if requested
         let processedNum = roundDown ? Math.floor(num) : num;
         
         // For very large numbers, use scientific notation
-        if (Math.abs(processedNum) >= scientificThreshold) {
+        // Changed from >= to > to show full number at exact threshold
+        if (Math.abs(processedNum) > threshold) {
             return processedNum.toExponential(2);
         }
     
-        // Manual thousand separator implementation for consistency
+        // Format with thousand separators and proper decimals
+        const options = {
+            minimumFractionDigits: decimalPlaces,
+            maximumFractionDigits: decimalPlaces
+        };
+        
+        // Use toLocaleString for consistent formatting
+        if (typeof processedNum.toLocaleString === 'function') {
+            return processedNum.toLocaleString(undefined, options);
+        }
+    
+        // Manual thousand separator implementation as fallback
         const parts = processedNum.toFixed(decimalPlaces).split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    
+        
         return parts.length > 1 ? parts.join('.') : parts[0];
     }
 
     formatUpgradeCost(cost) {
         try {
             const costValue = typeof cost === 'function' ? cost() : cost;
-            return this.formatNumber(costValue, 0, 1000000, true); // Whole numbers, floor values
+            return this.formatNumber(costValue, 0, null, true, 'cost');
         } catch (error) {
             console.error('Error formatting upgrade cost:', error);
             return '0';

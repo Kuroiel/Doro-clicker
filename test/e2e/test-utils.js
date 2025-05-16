@@ -36,28 +36,28 @@ export async function waitForGameInitialization(page, timeout = process.env.CI ?
  * @param {object} [options] - Reset options
  */
 export async function resetGameState(page, {
-    initialDoros = 1000,
-    resetUpgrades = true,
-    resetAutoclickers = true
+  initialDoros = 1000,
+  resetUpgrades = true,
+  resetAutoclickers = true
 } = {}) {
-    // Verify we're starting from initialized state
-    const currentURL = await page.url();
-    if (!currentURL.includes(getTestPath())) {
-      await page.goto(getTestPath());
-    }
+  // Verify we're starting from initialized state
+  const currentURL = await page.url();
+  if (!currentURL.includes(getTestPath())) {
+    await page.goto(getTestPath());
+  }
 
-    // Execute reset with immediate verification
-    await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
-        const game = window.doroGame;
-        game.state.doros = initialDoros;
-        
-        if (resetUpgrades) game.upgrades?.forEach(u => u.purchased = 0);
-        if (resetAutoclickers) game.autoclickers?.forEach(a => a.purchased = 0);
-        
-        game.updateUI?.();
-    }, { initialDoros, resetUpgrades, resetAutoclickers });
+  // Execute reset with immediate verification
+  await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
+      const game = window.doroGame;
+      game.state.doros = initialDoros;
+      
+      if (resetUpgrades) game.upgrades?.forEach(u => u.purchased = 0);
+      if (resetAutoclickers) game.autoclickers?.forEach(a => a.purchased = 0);
+      
+      game.updateUI?.();
+  }, { initialDoros, resetUpgrades, resetAutoclickers });
 
-    // Updated verification to handle formatted numbers with thousand separators
-    const formattedDoros = initialDoros.toLocaleString();
-    await expect(page.locator('#score-display')).toContainText(`Doros: ${formattedDoros}`, { timeout: 2000 });
+  // Updated verification to handle formatted numbers with thousand separators
+  const formattedDoros = new Intl.NumberFormat().format(initialDoros);
+  await expect(page.locator('#score-display')).toContainText(`Doros: ${formattedDoros}`, { timeout: 2000 });
 }

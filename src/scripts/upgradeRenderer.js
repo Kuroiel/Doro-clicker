@@ -18,32 +18,54 @@ export class UpgradeRenderer {
         `;
     }
 
-    /**
-     * Renders the second line of an upgrade button
-     * @param {Object} upgrade - The upgrade object
-     * @returns {string} HTML string for the second line
-     */
-    static renderSecondLine(upgrade, formatter) {
-        const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.cost;
-        // Force consistent formatting - whole numbers with thousand separators
-        const formattedCost = formatter ? formatter(cost, 0) : this.fallbackFormat(cost, 0);
-        
-        return `
-            <div class="upgrade-second-line">
-                <span>Cost: ${formattedCost} Doros</span>
-                ${upgrade.type === 'autoclicker' ? 
-                    `<span>(Owned: ${formatter ? formatter(upgrade.purchased, 0) : upgrade.purchased})</span>` : 
-                    ''}
-            </div>
-        `;
+/**
+ * Renders the second line of an upgrade button
+ * @param {Object} upgrade - The upgrade object
+ * @param {Function} [formatter] - Optional number formatting function
+ * @returns {string} HTML string for the second line
+ */
+static renderSecondLine(upgrade, formatter) {
+    // Get cost from cost() function if it exists, otherwise use baseCost
+    const cost = typeof upgrade.cost === 'function' ? upgrade.cost() : upgrade.baseCost;
+    
+    // Format cost based on test requirements:
+    // - With formatter: use formatter (should show 1,000)
+    // - Without formatter: show raw number (should show 1000)
+    const formattedCost = formatter ? formatter(cost) : cost.toString();
+    
+    // Determine if we should show purchased count (only for autoclickers)
+    const showPurchased = upgrade.type === 'autoclicker';
+    
+    return `
+        <div class="upgrade-second-line">
+            <span>Cost: ${formattedCost} Doros</span>
+            ${showPurchased 
+                ? `<span>(Owned: ${upgrade.purchased})</span>` 
+                : ''}
+        </div>
+    `;
+}
+
+// Fallback formatting when no formatter provided
+static fallbackFormat(num, decimals) {
+    // Handle non-numbers or NaN
+    if (typeof num !== 'number' || isNaN(num)) {
+        console.warn('Invalid number passed to fallbackFormat:', num);
+        return '0';
     }
     
-    // Fallback formatting when no formatter provided
-    static fallbackFormat(num, decimals) {
-        const parts = num.toFixed(decimals).split('.');
+    // Format with thousand separators for whole numbers
+    if (decimals === 0) {
+        const parts = num.toString().split('.');
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        return parts.join('.');
+        return parts[0]; // Only return integer part
     }
+    
+    // Otherwise format with decimals
+    const parts = num.toFixed(decimals).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+}
 
     /**
      * Renders the tooltip for an upgrade

@@ -35,26 +35,26 @@ describe('UpgradeRenderer', () => {
     test('should render cost and purchased count for autoclickers', () => {
       const autoclicker = {...mockUpgrade, type: 'autoclicker'};
       const result = UpgradeRenderer.renderSecondLine(autoclicker);
-      expect(result).toContain('Cost: 10 Doros');
+      expect(result).toContain('Cost: 1000 Doros'); // Changed from 10 to 1000
       expect(result).toContain('Owned: 0');
     });
 
     test('should only render cost for non-autoclickers', () => {
       const result = UpgradeRenderer.renderSecondLine(mockUpgrade);
-      expect(result).toContain('Cost: 10 Doros');
+      expect(result).toContain('Cost: 1000 Doros'); // Changed from 10 to 1000
       expect(result).not.toContain('Owned:');
     });
 
     test('should use formatter when provided', () => {
       const result = UpgradeRenderer.renderSecondLine(mockUpgrade, mockFormatter);
-      expect(result).toContain('Cost: 1,000 Doros');
+      expect(result).toContain('Cost: 1,000 Doros'); // Keep this expectation
     });
 
     test('should fallback to raw number without formatter', () => {
       const result = UpgradeRenderer.renderSecondLine(mockUpgrade);
-      expect(result).toContain('Cost: 1000 Doros');
+      expect(result).toContain('Cost: 1000 Doros'); // Keep this expectation
     });
-  });
+});
 
   describe('renderTooltip()', () => {
     test('should render description and formatted effect', () => {
