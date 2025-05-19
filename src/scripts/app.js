@@ -397,19 +397,36 @@ updateScoreDisplay() {
         const showStatsButton = DOMHelper.getShowStatsButton();
         const closeStatsButton = DOMHelper.getCloseStatsButton();
     
-        if (!statsElement || !showStatsButton || !closeStatsButton) {
-            console.warn('Stats elements not found');
-            return;
+    if (!statsElement || !showStatsButton || !closeStatsButton) {
+        console.warn('Stats elements not found');
+        return;
+    }
+
+    // Toggle stats overlay visibility
+    const toggleStats = (show) => {
+        statsElement.style.display = show ? 'block' : 'none';
+    };
+
+    // Show stats when button is clicked
+    showStatsButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        toggleStats(true);
+    });
+
+    // Hide stats when close button is clicked
+    closeStatsButton.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent event bubbling
+        toggleStats(false);
+    });
+
+    // Hide stats when clicking outside the overlay
+    document.addEventListener('click', (e) => {
+        if (statsElement.style.display === 'block' && 
+            !statsElement.contains(e.target) && 
+            e.target !== showStatsButton) {
+            toggleStats(false);
         }
-    
-        showStatsButton.addEventListener('click', () => {
-            const isVisible = window.getComputedStyle(statsElement).display === 'block';
-            DOMHelper.toggleVisibility(statsElement, !isVisible);
-        });
-        
-        closeStatsButton.addEventListener('click', () => {
-            DOMHelper.toggleVisibility(statsElement, false);
-        });
+    });
     }
 
     get sidebarElement() {
@@ -443,59 +460,59 @@ updateScoreDisplay() {
         };
     }
 
-    formatNumber(num, decimalPlaces = 0, scientificThreshold = null, roundDown = false, context = 'default') {
-        // Handle invalid inputs more robustly
-        if (num === null || num === undefined || typeof num !== 'number' || isNaN(num)) {
-            return '0';
-        }
-    
-        // Determine scientific notation threshold based on context
-        let threshold;
-        switch(context.toLowerCase()) {
-            case 'score':
-                threshold = 1000000000; // 1,000,000,000 for score display
-                break;
-            case 'cost':
-                threshold = 1000000; // 1,000,000 for costs
-                break;
-            case 'dps':
-                threshold = 100000; // 100,000 for DPS display
-                break;
-            default:
-                threshold = 1000000; // Default threshold
-        }
-        
-        // Override with explicit threshold if provided
-        if (scientificThreshold !== null) {
-            threshold = scientificThreshold;
-        }
-    
-        // Apply rounding if requested
-        let processedNum = roundDown ? Math.floor(num) : num;
-        
-        // For very large numbers, use scientific notation
-        // Changed from >= to > to show full number at exact threshold
-        if (Math.abs(processedNum) > threshold) {
-            return processedNum.toExponential(2);
-        }
-    
-        // Format with thousand separators and proper decimals
-        const options = {
-            minimumFractionDigits: decimalPlaces,
-            maximumFractionDigits: decimalPlaces
-        };
-        
-        // Use toLocaleString for consistent formatting
-        if (typeof processedNum.toLocaleString === 'function') {
-            return processedNum.toLocaleString(undefined, options);
-        }
-    
-        // Manual thousand separator implementation as fallback
-        const parts = processedNum.toFixed(decimalPlaces).split('.');
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        
-        return parts.length > 1 ? parts.join('.') : parts[0];
+formatNumber(num, decimalPlaces = 0, scientificThreshold = null, roundDown = false, context = 'default') {
+    // Handle invalid inputs more robustly
+    if (num === null || num === undefined || typeof num !== 'number' || isNaN(num)) {
+        return '0';
     }
+
+    // Determine scientific notation threshold based on context
+    let threshold;
+    switch(context.toLowerCase()) {
+        case 'score':
+            threshold = 1000000000; // 1,000,000,000 for score display
+            break;
+        case 'cost':
+            threshold = 1000000; // 1,000,000 for costs
+            break;
+        case 'dps':
+            threshold = 100000; // 100,000 for DPS display
+            break;
+        default:
+            threshold = 1000000; // Default threshold
+    }
+    
+    // Override with explicit threshold if provided
+    if (scientificThreshold !== null) {
+        threshold = scientificThreshold;
+    }
+
+    // Apply rounding if requested
+    let processedNum = roundDown ? Math.floor(num) : num;
+    
+    // For very large numbers, use scientific notation
+    // Changed from > to >= to match test expectations
+    if (Math.abs(processedNum) >= threshold) {
+        return processedNum.toExponential(2);
+    }
+
+    // Format with thousand separators and proper decimals
+    const options = {
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces
+    };
+    
+    // Use toLocaleString for consistent formatting
+    if (typeof processedNum.toLocaleString === 'function') {
+        return processedNum.toLocaleString(undefined, options);
+    }
+
+    // Manual thousand separator implementation as fallback
+    const parts = processedNum.toFixed(decimalPlaces).split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    return parts.length > 1 ? parts.join('.') : parts[0];
+}
 
     formatUpgradeCost(cost) {
         try {

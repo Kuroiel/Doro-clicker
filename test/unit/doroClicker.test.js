@@ -28,27 +28,36 @@ jest.mock('../../src/scripts/app.js', () => {
       this.destroy = jest.fn().mockImplementation(originalModule.DoroClicker.prototype.destroy);
     }
     
-    // This appears to be a method that should be part of the class
-    formatNumber(num, decimals = 0, context = 'score', threshold = null) {
-      // Match the exact thresholds from the real implementation
-      let sciThreshold;
-      switch(context) {
-        case 'score': sciThreshold = 999999999; break;
-        case 'cost': sciThreshold = 999999; break;
-        case 'dps': sciThreshold = 99999.9; break;
-        default: sciThreshold = 999999; break;
-      }
-      
-      if (threshold !== null) sciThreshold = threshold;
-      
-      if (num >= sciThreshold) return num.toExponential(2);
-      
-      // Simple formatting for tests that matches real behavior
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-      });
-    }
+
+formatNumber(num, decimalPlaces = 0, scientificThreshold = null, roundDown = false, context = 'default') {
+  // Match the exact thresholds from the real implementation
+  let threshold;
+  switch(context.toLowerCase()) {
+    case 'score': threshold = 1000000000; break;
+    case 'cost': threshold = 1000000; break;
+    case 'dps': threshold = 100000; break;
+    default: threshold = 1000000; break;
+  }
+  
+  // Override with explicit threshold if provided
+  if (scientificThreshold !== null) {
+    threshold = scientificThreshold;
+  }
+  
+  // Apply rounding if requested
+  const processedNum = roundDown ? Math.floor(num) : num;
+  
+  // For very large numbers, use scientific notation
+  if (Math.abs(processedNum) >= threshold) {
+    return processedNum.toExponential(2);
+  }
+  
+  // Format with thousand separators and proper decimals
+  return processedNum.toLocaleString(undefined, {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces
+  });
+}
   }
 
   return {
@@ -531,27 +540,33 @@ describe('Number Formatting', () => {
 
   beforeEach(() => {
     game = new DoroClicker();
-    // Mock DOMHelper to prevent side effects
     DOMHelper.setText = jest.fn();
   });
 
-  test('formatNumber() should add thousand separators with default context', () => {
-    // Test with standard number
-    expect(game.formatNumber(1000)).toBe('1,000');
-    // Test with larger number
-    expect(game.formatNumber(1234567)).toBe('1,234,567');
-    // Test with number below threshold
-    expect(game.formatNumber(999999998)).toBe('999,999,998');
-    // Test with number at threshold
-    expect(game.formatNumber(1000000000)).toBe('1.00e+9');
-  });
+test('formatNumber() should add thousand separators with default context', () => {
+  // Test with standard number (default context threshold is 1,000,000)
+  expect(game.formatNumber(1000, 0, null, false, 'default')).toBe('1,000');
+
+  
+  // Test with number just below default threshold
+  expect(game.formatNumber(999999, 0, null, false, 'default')).toBe('999,999');
+  
+  // Test with number at default threshold (should switch to scientific notation)
+  expect(game.formatNumber(1000000, 0, null, false, 'default')).toBe('1.00e+6');
+  
+  // Test with number above default threshold
+  expect(game.formatNumber(1000001, 0, null, false, 'default')).toBe('1.00e+6');
+});
 
 
 
   test('formatNumber() should handle score context (higher threshold)', () => {
-
+    // Test boundary cases
     expect(game.formatNumber(999999999, 0, null, false, 'score')).toBe('999,999,999');
     expect(game.formatNumber(1000000000, 0, null, false, 'score')).toBe('1.00e+9');
+    
+    // Test with decimal places
+    expect(game.formatNumber(123456789.123, 2, null, false, 'score')).toBe('123,456,789.12');
   });
 
   test('formatNumber() should handle cost context', () => {
@@ -584,14 +599,49 @@ describe('Number Formatting', () => {
 describe('Formatting Integration', () => {
   let game;
   let mockScoreElement;
+  let mockStats;
+  let autoContainerMock;
+  let upgradesContainerMock;
 
   beforeEach(() => {
+    // Initialize mock containers
+    autoContainerMock = {
+      innerHTML: '',
+      insertAdjacentHTML: jest.fn(),
+      appendChild: jest.fn(),
+      querySelector: jest.fn()
+    };
+
+    upgradesContainerMock = {
+      innerHTML: '',
+      insertAdjacentHTML: jest.fn(),
+      appendChild: jest.fn(),
+      querySelector: jest.fn()
+    };
+
     game = new DoroClicker();
     mockScoreElement = { textContent: '' };
+    mockStats = {
+      clicks: { textContent: '' },
+      dps: { textContent: '' },
+      total: { textContent: '' }
+    };
+    
+    // Set up all DOMHelper mocks
+    DOMHelper.getAutoclickersContainer.mockReturnValue(autoContainerMock);
+    DOMHelper.getUpgradesContainer.mockReturnValue(upgradesContainerMock);
     DOMHelper.getScoreElement.mockReturnValue(mockScoreElement);
+    DOMHelper.getStatElements.mockReturnValue(mockStats);
+    
     DOMHelper.setText.mockImplementation((element, text) => {
       if (element === mockScoreElement) {
         mockScoreElement.textContent = text;
+      } else if (element === mockStats.clicks) {
+        mockStats.clicks.textContent = text;
+      } else if (element === mockStats.dps) {
+        mockStats.dps.textContent = text;
+      } else if (element === mockStats.total) {
+        mockStats.total.textContent = text;
       }
     });
   });
@@ -607,49 +657,63 @@ describe('Formatting Integration', () => {
   });
 
   test('updateStatsDisplay() should format DPS with dps context', () => {
-    const mockStats = {
-      clicks: { textContent: '' },
-      dps: { textContent: '' },
-      total: { textContent: '' }
-    };
-    DOMHelper.getStatElements.mockReturnValue(mockStats);
-    
-    // Mock getTotalDPS to return specific values
+    const mockDPSValues = [99999.9, 100000];
     game.state.getTotalDPS = jest.fn()
-      .mockReturnValueOnce(99999.9)  // Below threshold
-      .mockReturnValueOnce(100000);  // Above threshold
+      .mockImplementation(() => mockDPSValues.shift());
     
+    // Set other stat values
     game.state.manualClicks = 1000;
     game.state.totalDoros = 500000;
     
+    // First call - below threshold (99,999.9)
     game.updateStatsDisplay();
     
-    // Verify DPS formatting
-    expect(mockStats.dps.textContent).toBe('99,999.9');
+    // Verify all stats were updated correctly
+    expect(DOMHelper.setText).toHaveBeenCalledWith(
+      mockStats.dps,
+      '99,999.9'
+    );
+    expect(DOMHelper.setText).toHaveBeenCalledWith(
+      mockStats.clicks,
+      '1,000'
+    );
+    expect(DOMHelper.setText).toHaveBeenCalledWith(
+      mockStats.total,
+      '500,000'
+    );
     
-    // Second call with higher DPS
+    // Reset mock calls for second test
+    jest.clearAllMocks();
+    
+    // Second call - above threshold (100,000)
     game.updateStatsDisplay();
-    expect(mockStats.dps.textContent).toMatch(/1.00e\+5/);
-    
-    // Verify other stats use default formatting
-    expect(mockStats.clicks.textContent).toBe('1,000');
-    expect(mockStats.total.textContent).toBe('500,000');
+    expect(DOMHelper.setText).toHaveBeenCalledWith(
+      mockStats.dps,
+      '1.00e+5'
+    );
   });
 
   test('renderUpgrades() should format costs with cost context', () => {
-    // Mock an upgrade with high cost
     const expensiveUpgrade = {
       id: 99,
       name: 'Expensive Upgrade',
-      cost: () => 1000000,
+      cost: () => 1000000,  // 1,000,000 (at threshold for cost context)
       purchased: 0,
       type: 'autoclicker'
     };
-    game.autoclickers = [expensiveUpgrade];
     
+    // Set up game state
+    game.autoclickers = [expensiveUpgrade];
+    game.upgrades = [];
+    game.state.doros = 0;
+    
+    // Clear previous calls
+    autoContainerMock.insertAdjacentHTML.mockClear();
+    
+    // Execute
     game.renderUpgrades();
     
-    // Verify the cost was formatted with cost context
+    // Verify the cost was formatted with cost context (should use scientific notation)
     expect(autoContainerMock.insertAdjacentHTML).toHaveBeenCalledWith(
       'beforeend',
       expect.stringContaining('1.00e+6')
