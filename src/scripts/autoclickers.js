@@ -99,7 +99,7 @@ export const autoclickers = [
         }
     },
     {
-        id: 5,
+        id: 6,
         name: 'Napping Siren Doro',
         type: 'autoclicker',
         baseCost: 1500, 
@@ -147,7 +147,7 @@ export const autoclickers = [
         }
     },
     {
-        id: 6,
+        id: 7,
         name: 'Comfy Doro',
         type: 'autoclicker',
         baseCost: 6900, 
@@ -194,7 +194,7 @@ export const autoclickers = [
         }
     },
         {
-        id: 7,
+        id: 8,
         name: 'Doro Dent',
         type: 'autoclicker',
         baseCost: 15000, 
@@ -241,7 +241,7 @@ export const autoclickers = [
         }
     },
     {
-        id: 8,
+        id: 9,
         name: 'McFraud',
         type: 'autoclicker',
         baseCost: 50000, 
@@ -288,7 +288,7 @@ export const autoclickers = [
         }        
     },
         {
-        id: 9,
+        id: 10,
         name: 'Flying Doro',
         type: 'autoclicker',
         baseCost: 99999, 
@@ -335,7 +335,7 @@ export const autoclickers = [
         }        
     },
             {
-        id: 10,
+        id: 11,
         name: 'CinDoro',
         type: 'autoclicker',
         baseCost: 169696, 
@@ -382,7 +382,7 @@ export const autoclickers = [
         }        
     },
                 {
-        id: 11,
+        id: 12,
         name: 'Doro Fish',
         type: 'autoclicker',
         baseCost: 400000, 
@@ -429,7 +429,7 @@ export const autoclickers = [
         }        
     },
                     {
-        id: 12,
+        id: 13,
         name: 'Doro Dash',
         type: 'autoclicker',
         baseCost: 999999, 
