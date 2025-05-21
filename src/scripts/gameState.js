@@ -80,6 +80,49 @@ export class GameState {
     }
 
 
+// ======================
+// Save/Load Methods
+// ======================
 
+/**
+ * Serializes game state for saving
+ * @returns {Object} Serializable game state
+ */
+serialize() {
+  return {
+    doros: this.doros,
+    manualClicks: this.manualClicks,
+    totalAutoDoros: this.totalAutoDoros,
+    totalDoros: this.totalDoros,
+    globalDpsMultiplier: this.globalDpsMultiplier,
+    lastSaved: Date.now()
+  };
+}
+
+/**
+ * Loads game state from serialized data
+ * @param {Object} data - Serialized game state
+ */
+deserialize(data) {
+  if (!data) return;
+  
+  this.doros = data.doros || 0;
+  this.manualClicks = data.manualClicks || 0;
+  this.totalAutoDoros = data.totalAutoDoros || 0;
+  this.totalDoros = data.totalDoros || 0;
+  this.globalDpsMultiplier = data.globalDpsMultiplier || 1;
+}
+
+/**
+ * Resets game to initial state
+ */
+reset() {
+  this.doros = 0;
+  this.manualClicks = 0;
+  this.totalAutoDoros = 0;
+  this.totalDoros = 0;
+  this.globalDpsMultiplier = 1;
+  this.notify();
+}
 
   }

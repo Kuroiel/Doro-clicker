@@ -24,6 +24,8 @@ class DoroClicker {
         this._processingPurchase = false;
         this._purchaseDebounce = false;
         this._sidebarElement = null;
+          this.saveInterval = null;
+  this.SAVE_INTERVAL_MS = 30000;
         
         this._isRendering = false;
 
@@ -39,6 +41,7 @@ class DoroClicker {
         this.setupEventListeners();
         this.setupStatsEvents();
         this.state.addListener(() => this.updateUI());
+          this.initSaveSystem();
         this.switchView('autoclickers');
         this.updateUI();
     }
@@ -529,6 +532,139 @@ formatNumber(num, decimalPlaces = 0, scientificThreshold = null, roundDown = fal
     destroy() {
         clearInterval(this.autoclickerInterval);
     }
+
+    // ======================
+// Save/Load Methods
+// ======================
+
+/**
+ * Initializes save system
+ */
+initSaveSystem() {
+  this.loadGame();
+  this.setupAutoSave();
+  this.setupResetButton();
+}
+
+/**
+ * Sets up auto-save interval
+ */
+setupAutoSave() {
+  if (this.saveInterval) {
+    clearInterval(this.saveInterval);
+  }
+  this.saveInterval = setInterval(() => this.saveGame(), this.SAVE_INTERVAL_MS);
+}
+
+/**
+ * Saves game state to localStorage
+ */
+saveGame() {
+  try {
+    const saveData = {
+      state: this.state.serialize(),
+      autoclickers: this.autoclickers.map(a => ({ 
+        id: a.id, 
+        purchased: a.purchased 
+      })),
+      upgrades: this.upgrades.map(u => ({
+        id: u.id,
+        purchased: u.purchased
+      })),
+      clickMultiplier: this.clickMultiplier
+    };
+    localStorage.setItem('doroClickerSave', JSON.stringify(saveData));
+  } catch (error) {
+    console.error('Failed to save game:', error);
+  }
+}
+
+/**
+ * Loads game state from localStorage
+ */
+loadGame() {
+  try {
+    const saveData = JSON.parse(localStorage.getItem('doroClickerSave'));
+    if (!saveData) return;
+
+    // Load base state
+    this.state.deserialize(saveData.state);
+    
+    // Load autoclickers
+    saveData.autoclickers?.forEach(savedClicker => {
+      const clicker = this.autoclickers.find(a => a.id === savedClicker.id);
+      if (clicker) clicker.purchased = savedClicker.purchased || 0;
+    });
+    
+    // Load upgrades
+    saveData.upgrades?.forEach(savedUpgrade => {
+      const upgrade = this.upgrades.find(u => u.id === savedUpgrade.id);
+      if (upgrade) {
+        upgrade.purchased = savedUpgrade.purchased || 0;
+        this.applyUpgrade(upgrade); // Re-apply upgrade effects
+      }
+    });
+    
+    // Load other properties
+    this.clickMultiplier = saveData.clickMultiplier || 1;
+    
+    this.updateUI();
+  } catch (error) {
+    console.error('Failed to load game:', error);
+  }
+}
+
+/**
+ * Resets the game to initial state
+ */
+resetGame() {
+  // Reset state
+  this.state.reset();
+  
+  // Reset autoclickers
+  this.autoclickers.forEach(clicker => {
+    clicker.purchased = 0;
+  });
+  
+  // Reset upgrades
+  this.upgrades.forEach(upgrade => {
+    upgrade.purchased = 0;
+  });
+  
+  // Reset other properties
+  this.clickMultiplier = 1;
+  
+  // Update UI and save
+  this.updateUI();
+  this.saveGame();
+}
+
+/**
+ * Sets up reset button and modal handlers
+ */
+setupResetButton() {
+  // Create reset button if it doesn't exist
+  if (!document.getElementById('reset-button')) {
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'reset-button';
+    resetBtn.className = 'reset-button';
+    resetBtn.textContent = 'Reset';
+    document.body.appendChild(resetBtn);
+    
+    // Add event listeners
+    resetBtn.addEventListener('click', () => DOMHelper.showResetModal());
+    
+    // Modal handlers
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'confirm-reset') {
+        this.resetGame();
+        DOMHelper.hideResetModal();
+      } else if (e.target.id === 'cancel-reset') {
+        DOMHelper.hideResetModal();
+      }
+    });
+  }
+}
 }
 
 // Create game instance

@@ -229,6 +229,54 @@ static getDorosCount() {
 }
 
 
+// ======================
+// Reset UI Methods
+// ======================
 
+/**
+ * Creates reset confirmation modal
+ * @returns {HTMLElement} The modal element
+ */
+static createResetModal() {
+  const modal = document.createElement('div');
+  modal.id = 'reset-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <p>This will reset your game<br>Are you sure you want to reset?</p>
+      <div class="modal-buttons">
+        <button id="confirm-reset" class="modal-button confirm">Yes</button>
+        <button id="cancel-reset" class="modal-button cancel">No</button>
+      </div>
+    </div>
+  `;
+  return modal;
+}
+
+/**
+ * Gets the reset button element
+ * @returns {HTMLElement} The reset button
+ */
+static getResetButton() {
+  return document.getElementById('reset-button');
+}
+
+/**
+ * Shows the reset confirmation modal
+ */
+static showResetModal() {
+  const modal = this.createResetModal();
+  document.body.appendChild(modal);
+}
+
+/**
+ * Hides the reset confirmation modal
+ */
+static hideResetModal() {
+  const modal = document.getElementById('reset-modal');
+  if (modal) {
+    document.body.removeChild(modal);
+  }
+}
 
 }

@@ -270,3 +270,65 @@ body {
         margin-bottom: 10px;
     }
 }
+
+/* Reset Button */
+.reset-button {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  background-color: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.reset-button:hover {
+  background-color: #cc0000;
+}
+
+/* Reset Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-button.confirm {
+  background-color: #ff4444;
+  color: white;
+}
+
+.modal-button.cancel {
+  background-color: #ccc;
+}
