@@ -67,36 +67,39 @@ static fallbackFormat(num, decimals) {
     return parts.join('.');
 }
 
-    /**
-     * Renders the tooltip for an upgrade
-     * @param {Object} upgrade - The upgrade object
-     * @returns {string} HTML string for the tooltip
-     */
-    static renderTooltip(upgrade, formatter) {
-        if (!upgrade.description || !upgrade.effectDescription) return '';
+/**
+ * Renders the tooltip for an upgrade
+ * @param {Object} upgrade - The upgrade object
+ * @param {Function} [formatter] - Optional number formatting function
+ * @returns {string} HTML string for the tooltip
+ */
+static renderTooltip(upgrade, formatter) {
+    if (!upgrade.description || !upgrade.effectDescription) return '';
+
+    // Special handling for effect description to prevent unwanted formatting of calculation values
+    const effectText = typeof upgrade.effectDescription === 'function' 
+        ? upgrade.effectDescription(
+            // For value display, use raw number when it's part of a calculation
+            // This prevents thousand separators from breaking calculations in tooltips
+            upgrade.value, // Pass raw value instead of formatted
+            upgrade.purchased
+          )
+        : upgrade.effectDescription;
     
-        // Format numbers in effect description with max 1 decimal place
-        const formatForTooltip = (num) => {
-            const decimals = Math.min(1, (num.toString().split('.')[1] || '').length);
-            return formatter ? formatter(num, decimals) : num.toFixed(decimals);
-        };
-    
-        const effectText = typeof upgrade.effectDescription === 'function' 
-            ? upgrade.effectDescription(
-                formatter ? formatForTooltip(upgrade.value) : upgrade.value,
-                upgrade.purchased
-              )
-            : upgrade.effectDescription;
-        
-        const formattedEffect = effectText.replace(/\n/g, '<br>');
-    
-        return `
-            <div class="upgrade-tooltip">
-                <p>${upgrade.description}</p>
-                <p><i>${formattedEffect}</i></p>
-            </div>
-        `;
-    }
+    // Only format numbers that are purely for display (not part of calculations)
+    const formattedEffect = effectText
+        .replace(/\n/g, '<br>') // Handle line breaks
+        .replace(/(\d+)(?=\D*$)/g, (match) => { // Format only numbers at the end of strings
+            return formatter ? formatter(parseFloat(match)) : match;
+        });
+
+    return `
+        <div class="upgrade-tooltip">
+            <p>${upgrade.description}</p>
+            <p><i>${formattedEffect}</i></p>
+        </div>
+    `;
+}
 
     /**
      * Renders a complete upgrade button

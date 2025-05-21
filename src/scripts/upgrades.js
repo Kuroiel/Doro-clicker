@@ -46,7 +46,7 @@ export const upgrades = [
         priority: 1
     },
     {
-        id: 5, // Using ID 5 to avoid conflicts with existing upgrades
+        id: 5, 
         name: "Motivating Doro",
         type: 'globalDpsMultiplier',
         baseCost: 10000,
