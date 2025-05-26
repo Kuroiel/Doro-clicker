@@ -1,0 +1,48 @@
+import { GameState } from './gameState.js';
+import { autoclickers } from '../Systems/autoclickers.js';
+import { upgrades } from '../Systems/upgrades.js';
+import { GameMechanics } from './gamemechanics.js';
+import { UIManager } from '../UI/uimanager.js';
+import { EventHandlers } from '../Events/eventhandlers.js';
+import { SaveSystem } from '../Systems/savesystem.js';
+import { AutoclickerSystem } from '../Systems/autoclickersystem.js';
+import { ViewManager } from '../Events/viewmanager.js';
+
+class DoroClicker {
+    constructor() {
+        // Initialize core systems
+        this.state = new GameState();
+        this.viewManager = new ViewManager(this);
+        this.mechanics = new GameMechanics(this);
+         this.autoclickerSystem = new AutoclickerSystem(this);
+        this.ui = new UIManager(this);
+        this.events = new EventHandlers(this);
+        this.saveSystem = new SaveSystem(this);
+
+        
+        // Initialize game data
+        this.autoclickers = autoclickers;
+        this.upgrades = upgrades;
+        this.state.setAutoclickers(this.autoclickers);
+        
+        // Initialize game
+        this.init();
+    }
+
+    init() {
+        this.autoclickerSystem.setup();
+        this.events.setupAllEventListeners();
+        this.saveSystem.init();
+        this.ui.switchView('autoclickers');
+        this.ui.updateUI();
+    }
+
+    destroy() {
+        this.autoclickerSystem.cleanup();
+        this.mechanics.cleanup();
+        this.events.removeAllEventListeners();
+        this.saveSystem.cleanup();
+    }
+}
+
+export { DoroClicker };

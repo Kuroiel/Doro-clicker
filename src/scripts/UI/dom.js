@@ -74,11 +74,17 @@ export class DOMHelper {
    * @returns {Object} Object containing references to stat elements
    */
   static getStatElements() {
-    return {
-      clicks: document.getElementById('stat-clicks'),
-      dps: document.getElementById('stat-dps'),
-      total: document.getElementById('stat-total')
-    };
+        const statsElement = document.getElementById('stats-overlay');
+        if (!statsElement) {
+            console.warn('Stats overlay not found');
+            return null;
+        }
+        
+        return {
+            clicks: statsElement.querySelector('#stat-clicks'),
+            dps: statsElement.querySelector('#stat-dps'),
+            total: statsElement.querySelector('#stat-total')
+        };
   }
 
   /**

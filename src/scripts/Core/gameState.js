@@ -21,16 +21,28 @@ export class GameState {
   }
 
   addAutoDoros(dpsAmount) {
-    if (typeof dpsAmount !== 'number' || dpsAmount <= 0) {
+    if (typeof dpsAmount !== 'number' || dpsAmount <= 0 || isNaN(dpsAmount)) {
         console.error('Invalid DPS amount:', dpsAmount);
         return;
     }
     
-    // Add the full DPS amount each second
-    this.doros += dpsAmount;
-    this.totalAutoDoros += dpsAmount;
-    this.totalDoros += dpsAmount;
+    // Round to 2 decimal places to avoid floating point issues
+    const amountToAdd = parseFloat(dpsAmount.toFixed(2));
+    
+    this.doros += amountToAdd;
+    this.totalAutoDoros += amountToAdd;
+    this.totalDoros += amountToAdd;
     this.notify();
+    }
+
+    increment(amount = 1) {
+        if (typeof amount !== 'number' || amount <= 0) {
+            console.error('Invalid increment amount:', amount);
+            return;
+        }
+        this.doros += amount;
+        this.totalDoros += amount;
+        this.notify();
 }
 
   
@@ -44,17 +56,16 @@ export class GameState {
   }
 
   notify() {
-    // Check if Doros have changed (any difference)
-    const dorosChanged = this.doros !== this._lastNotifiedDoros;
+    this.listeners.forEach(cb => {
+        try {
+            cb();
+        } catch (error) {
+            console.error('State listener error:', error);
+        }
+    });
+    this._lastNotifiedDoros = this.doros;
+    }
     
-    // Notify listeners if:
-    // 1. Doros changed, OR
-    // 2. This is the first notification (initial state)
-    if (dorosChanged || !this._lastNotifiedDoros) {
-        this._lastNotifiedDoros = this.doros; // Update last notified value
-        this.listeners.forEach(cb => cb()); // Trigger all UI updates
-    }
-    }
 
     getTotalDPS() {
       if (!this._autoclickers || this._autoclickers.length === 0) return 0;
