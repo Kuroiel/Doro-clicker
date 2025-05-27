@@ -7,14 +7,15 @@ export class ViewManager {
     }
 
     switchView(view) {
-        const validViews = ['autoclickers', 'upgrades'];
-        if (!validViews.includes(view)) return;
+    const validViews = ['autoclickers', 'upgrades'];
+    if (!validViews.includes(view)) return;
 
-        this.currentView = view;
-        this.game.ui._needsUpgradeRender = true;
-        
-        this._updateViewButtons();
-        this._updateViewContainers();
+    this.currentView = view;
+    this._updateViewButtons();
+    this._updateViewContainers();
+    
+    // Use standard UI update unless view changes require full render
+    this.game.ui.updateUI();
     }
 
     _updateViewButtons() {

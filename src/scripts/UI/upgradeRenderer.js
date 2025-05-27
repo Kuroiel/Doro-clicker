@@ -76,27 +76,24 @@ static fallbackFormat(num, decimals) {
 static renderTooltip(upgrade, formatter) {
     if (!upgrade.description || !upgrade.effectDescription) return '';
 
-    // Special handling for effect description to prevent unwanted formatting of calculation values
-    const effectText = typeof upgrade.effectDescription === 'function' 
-        ? upgrade.effectDescription(
-            // For value display, use raw number when it's part of a calculation
-            // This prevents thousand separators from breaking calculations in tooltips
-            upgrade.value, // Pass raw value instead of formatted
-            upgrade.purchased
-          )
-        : upgrade.effectDescription;
-    
-    // Only format numbers that are purely for display (not part of calculations)
-    const formattedEffect = effectText
-        .replace(/\n/g, '<br>') // Handle line breaks
-        .replace(/(\d+)(?=\D*$)/g, (match) => { // Format only numbers at the end of strings
-            return formatter ? formatter(parseFloat(match)) : match;
-        });
+    // Handle both function and string effect descriptions
+    let effectText;
+    if (typeof upgrade.effectDescription === 'function') {
+        effectText = upgrade.effectDescription(
+            upgrade.value,
+            upgrade.purchased, // Pass current purchased count
+            formatter
+        );
+    } else {
+        effectText = upgrade.effectDescription
+            .replace(/{value}/g, formatter ? formatter(upgrade.value) : upgrade.value)
+            .replace(/{count}/g, upgrade.purchased);
+    }
 
     return `
         <div class="upgrade-tooltip">
             <p>${upgrade.description}</p>
-            <p><i>${formattedEffect}</i></p>
+            <p><i>${effectText.replace(/\n/g, '<br>')}</i></p>
         </div>
     `;
 }

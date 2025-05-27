@@ -20,23 +20,24 @@ export class UIManager {
         this.updateScoreDisplay();
         this.updateStatsDisplay();
     this.refreshAutoclickerButtons();
+        this.updateAllButtonContents();
     }
 
-    refreshAutoclickerButtons() {
+refreshAutoclickerButtons() {
     const buttons = DOMHelper.getUpgradeButtons();
     const autoclickerIds = this.game.autoclickers.map(a => a.id);
     
     buttons.forEach(button => {
         const upgradeId = parseInt(button.dataset.id);
-        if (!autoclickerIds.includes(upgradeId)) return;
+        const upgrade = this.game.autoclickers.find(u => u.id === upgradeId) || 
+                       this.game.upgrades.find(u => u.id === upgradeId);
         
-        const upgrade = this.game.autoclickers.find(u => u.id === upgradeId);
         if (!upgrade) return;
         
         const formatter = (num, decimals = 0) => 
             this.formatter.formatNumber(num, decimals, null, decimals === 0, 'cost');
         
-        // Completely rebuild button content
+        // Completely rebuild button content including tooltips
         button.innerHTML = `
             <div class="upgrade-header">
                 ${UpgradeRenderer.renderFirstLine(upgrade)}
@@ -53,9 +54,9 @@ export class UIManager {
 }
 
     updateUI() {
-        this.updateScoreDisplay();
-        this.updateStatsDisplay(); // Explicitly call stats update
-        
+    this.updateScoreDisplay();
+    this.updateStatsDisplay();
+
     const dorosChangedSignificantly = Math.abs(this.game.state.doros - this._lastDoros) > 1;
     
     if (this._needsUpgradeRender || dorosChangedSignificantly) {
@@ -63,15 +64,25 @@ export class UIManager {
         this._lastDoros = this.game.state.doros;
         this._needsUpgradeRender = false;
     } else {
-        // Enhanced button state update that includes autoclickers
-        this.updateAllButtonContents();
+        // Lightweight update path
+        this.updateButtonStates(); // More efficient than updateAllButtonContents
     }
     
-    // Explicitly update autoclicker buttons even if not doing full render
+    // Keep autoclicker affordance check
     this.updateAutoclickerAffordance();
     }
 
+   forceFullUpdate(updateButtons = true) {
+    this._needsUpgradeRender = true;
+    this.updateScoreDisplay();
+    this.updateStatsDisplay();
     
+    if (updateButtons) {
+        this.renderUpgrades();
+    }
+    
+    this._lastDoros = this.game.state.doros;
+} 
 
     updateScoreDisplay() {
         const formattedDoros = this.formatter.formatNumber(Math.floor(this.game.state.doros), 0, null, true, 'score');
@@ -253,4 +264,28 @@ export class UIManager {
             }
         });
     }
+
+    refreshUpgradeButton(upgradeId) {
+    const button = DOMHelper.getUpgradeButton(upgradeId);
+    if (!button) return;
+
+    const upgrade = this.game.autoclickers.find(u => u.id === upgradeId) || 
+                   this.game.upgrades.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    const formatter = (num, decimals = 0) => 
+        this.formatter.formatNumber(num, decimals, null, decimals === 0, 'cost');
+
+    button.innerHTML = `
+        <div class="upgrade-header">
+            ${UpgradeRenderer.renderFirstLine(upgrade)}
+        </div>
+        ${UpgradeRenderer.renderSecondLine(upgrade, formatter)}
+        ${UpgradeRenderer.renderTooltip(upgrade, formatter)}
+    `;
+
+    const canAfford = this.game.mechanics.canAfford(upgrade);
+    button.classList.toggle('affordable', canAfford);
+    button.disabled = !canAfford;
+}
 }
