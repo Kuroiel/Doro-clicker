@@ -1,4 +1,3 @@
-// Replace the test file with this version:
 import { test, expect } from '@playwright/test';
 import { waitForGameInitialization, resetGameState } from './test-utils';
 

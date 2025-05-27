@@ -1,18 +1,10 @@
-/**
- * Optimized test utilities with fast-fail behavior
- * Maintains core functionality while reducing wait times
- */
 import { expect } from '@playwright/test';
 
 function getTestPath() {
     return process.env.CI ? '/Doro-clicker/' : '/';
-  }
+}
 
-/**
- * Fast initialization check with minimal waits
- * @param {import('@playwright/test').Page} page - Playwright page object
- * @param {number} [timeout=10000] - Aggressive timeout (5s for CI)
- */
+
 export async function waitForGameInitialization(page, timeout = process.env.CI ? 5000 : 3000) {
     const currentURL = await page.url();
     if (!currentURL.includes(getTestPath())) {
@@ -30,11 +22,7 @@ export async function waitForGameInitialization(page, timeout = process.env.CI ?
     await page.waitForFunction(() => window.doroGame?.state, { timeout: 3000 });
 }
 
-/**
- * Optimized state reset with immediate validation
- * @param {import('@playwright/test').Page} page - Playwright page object
- * @param {object} [options] - Reset options
- */
+
 export async function resetGameState(page, {
   initialDoros = 1000,
   resetUpgrades = true,
@@ -49,15 +37,42 @@ export async function resetGameState(page, {
   // Execute reset with immediate verification
   await page.evaluate(({ initialDoros, resetUpgrades, resetAutoclickers }) => {
       const game = window.doroGame;
+      
+      // Set initial doros through the state object
       game.state.doros = initialDoros;
+      game.state.totalDoros = initialDoros;
       
-      if (resetUpgrades) game.upgrades?.forEach(u => u.purchased = 0);
-      if (resetAutoclickers) game.autoclickers?.forEach(a => a.purchased = 0);
+      // Reset upgrades if requested
+      if (resetUpgrades && game.upgrades) {
+          game.upgrades.forEach(u => {
+              u.purchased = 0;
+              // Re-apply upgrade effects if needed
+              game.mechanics.applyUpgrade(u);
+          });
+      }
       
-      game.updateUI?.();
+      // Reset autoclickers if requested
+      if (resetAutoclickers && game.autoclickers) {
+          game.autoclickers.forEach(a => {
+              a.purchased = 0;
+              // Reset to base value
+              if (a.baseDPS) {
+                  a.value = a.baseDPS;
+              }
+          });
+      }
+      
+      // Reset click multiplier
+      game.mechanics.clickMultiplier = 1;
+      
+      // Force UI update
+      game.ui.updateUI();
   }, { initialDoros, resetUpgrades, resetAutoclickers });
 
-  // Updated verification to handle formatted numbers with thousand separators
-  const formattedDoros = new Intl.NumberFormat().format(initialDoros);
-  await expect(page.locator('#score-display')).toContainText(`Doros: ${formattedDoros}`, { timeout: 2000 });
+  // Verify the state was set correctly
+  await expect(async () => {
+      const displayedText = await page.locator('#score-display').textContent();
+      const displayedNumber = displayedText.replace(/[^0-9]/g, '');
+      expect(parseInt(displayedNumber)).toBe(initialDoros);
+  }).toPass({ timeout: 2000 });
 }

@@ -1,6 +1,3 @@
-/**
- * Tests core game functionality and baseline interactions
- */
 import { test, expect } from '@playwright/test';
 import { waitForGameInitialization, resetGameState } from './test-utils';
 

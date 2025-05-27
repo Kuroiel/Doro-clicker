@@ -1,7 +1,3 @@
-/**
- * Tests autoclicker functionality and scaling
- * Updated to match current game mechanics
- */
 import { test, expect } from '@playwright/test';
 import { waitForGameInitialization, resetGameState } from './test-utils';
 
@@ -11,24 +7,27 @@ test.describe('Autoclicker System', () => {
         
     await waitForGameInitialization(page);
   
-    // Reset to default test state (1000 doros)
     await resetGameState(page);
 
   });
 
   test('should generate doros from autoclickers', async ({ page }) => {
-    // Purchase autoclicker
-    const autoClickerButton = page.locator('[data-id="2"]');
-    await autoClickerButton.click();
-    
-    // Verify passive generation
-    await page.waitForTimeout(1100); // Allow 1 interval to trigger
-    const doros = await page.evaluate(() => window.doroGame.state.doros);
-    
-    // Check if doros increased (initial 1000 - cost + generation)
-    const initialCost = 10; // Base cost of Lurking Doro
-    expect(doros).toBeGreaterThan(1000 - initialCost); // Should have at least (initial - cost)
-    expect(doros).toBeLessThan(1000 + 2); // Shouldn't gain more than 1 DPS in 1 second
+  // Verify initial doros
+    await expect(page.locator('#score-display')).toContainText('Doros: 1,000');
+  
+  // Purchase autoclicker
+  const autoClickerButton = page.locator('[data-id="2"]');
+  await autoClickerButton.click();
+  
+  // Verify passive generation
+  await page.waitForTimeout(1100); // Allow 1 interval to trigger
+  const doros = await page.evaluate(() => window.doroGame.state.doros);
+  
+  // Check if doros increased (initial 1000 - cost + generation)
+  const initialCost = 10;
+      await page.waitForTimeout(100);
+  expect(doros).toBeGreaterThan(1000 - initialCost);
+  expect(doros).toBeLessThan(1000 + 2);
   });
 
   test('should scale autoclicker costs', async ({ page }) => {
@@ -50,9 +49,9 @@ test.describe('Autoclicker System', () => {
 
   test('should handle multiple autoclicker types', async ({ page }) => {
     // Purchase different autoclickers
-    await page.locator('[data-id="2"]').click(); // Lurking Doro (1 DPS)
+    await page.locator('[data-id="2"]').click(); 
     await page.waitForTimeout(100);
-    await page.locator('[data-id="4"]').click(); // Walkin Doro (15 DPS)
+    await page.locator('[data-id="4"]').click(); 
     await page.waitForTimeout(100);
     
     // Verify DPS display (1 + 15 = 16 DPS)
