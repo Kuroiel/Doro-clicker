@@ -188,4 +188,214 @@ it('should not initialize if window.doroGame exists during import', async () => 
   expect(DoroClickerMock).toHaveBeenCalledTimes(0);
 });
 });
+
+describe('Game Instance Assignment', () => {
+  let originalDoroGame;
+
+  beforeEach(() => {
+    originalDoroGame = window.doroGame;
+    DoroClickerMock.mockClear();
+  });
+
+  afterEach(() => {
+    window.doroGame = originalDoroGame;
+  });
+
+  describe('Direct Assignment (Top Level)', () => {
+    it('should assign new game instance when no existing instance', async () => {
+      delete window.doroGame;
+      const mockInstance = { mock: 'instance' };
+      DoroClickerMock.mockReturnValue(mockInstance);
+
+      await import('../../src/scripts/index.js');
+
+      expect(DoroClickerMock).toHaveBeenCalledTimes(1);
+      expect(window.doroGame).toBe(mockInstance);
+    });
+
+it('should preserve existing instance when checks are present', async () => {
+  const oldInstance = { old: 'instance' };
+  window.doroGame = oldInstance;
+  const newInstance = { new: 'instance' };
+  DoroClickerMock.mockReturnValue(newInstance);
+
+  await import('../../src/scripts/index.js');
+
+  expect(window.doroGame).toBe(oldInstance); // Should keep the old instance
+  expect(window.doroGame).not.toBe(newInstance); // Should not use the new one
+  expect(DoroClickerMock).not.toHaveBeenCalled(); // Constructor shouldn't be called
+});
+  });
+
+  describe('DOMContentLoaded Assignment', () => {
+    it('should assign new instance when triggered and no game exists', async () => {
+      delete window.doroGame;
+      const mockInstance = { mock: 'instance' };
+      DoroClickerMock.mockReturnValue(mockInstance);
+
+      await import('../../src/scripts/index.js');
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+
+      expect(DoroClickerMock).toHaveBeenCalledTimes(1); // Once on import, once on event
+      expect(window.doroGame).toBe(mockInstance);
+    });
+
+    it('should not assign new instance when game already exists', async () => {
+      const existingInstance = { existing: 'instance' };
+      window.doroGame = existingInstance;
+      DoroClickerMock.mockImplementation(() => {
+        throw new Error('Should not be called');
+      });
+
+      await import('../../src/scripts/index.js');
+      document.dispatchEvent(new Event('DOMContentLoaded'));
+
+      expect(DoroClickerMock).not.toHaveBeenCalled();
+      expect(window.doroGame).toBe(existingInstance);
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle constructor errors gracefully', async () => {
+      delete window.doroGame;
+      const mockError = new Error('Construction failed');
+      DoroClickerMock.mockImplementation(() => {
+        throw mockError;
+      });
+
+      await import('../../src/scripts/index.js');
+
+      expect(console.error).toHaveBeenCalledWith(
+        'Game initialization failed:',
+        mockError
+      );
+      expect(window.doroGame).toBeUndefined();
+    });
+
+    it('should create fallback object in testing mode on error', async () => {
+      window.__TESTING__ = {};
+      delete window.doroGame;
+      DoroClickerMock.mockImplementation(() => {
+        throw new Error('Construction failed');
+      });
+
+      await import('../../src/scripts/index.js');
+
+      expect(window.doroGame).toEqual({
+        state: {},
+        upgrades: [],
+        autoclickers: [],
+        updateUI: expect.any(Function)
+      });
+    });
+  });
+
+  describe('Instance Properties', () => {
+    it('should assign instance with expected properties', async () => {
+      delete window.doroGame;
+      const mockInstance = {
+        state: { clicks: 0 },
+        upgrades: ['test'],
+        autoclickers: [],
+        updateUI: jest.fn()
+      };
+      DoroClickerMock.mockReturnValue(mockInstance);
+
+      await import('../../src/scripts/index.js');
+
+      expect(window.doroGame).toMatchObject({
+        state: expect.any(Object),
+        upgrades: expect.any(Array),
+        autoclickers: expect.any(Array),
+        updateUI: expect.any(Function)
+      });
+    });
+  });
+});
+
+describe('Complete Line Coverage for Game Assignment', () => {
+  let originalDoroGame;
+  let originalTestingFlag;
+
+  beforeEach(() => {
+    // Store original values
+    originalDoroGame = window.doroGame;
+    originalTestingFlag = window.__TESTING__;
+    
+    // Clear all mocks
+    DoroClickerMock.mockClear();
+    consoleErrorSpy.mockClear();
+    
+    // Reset state
+    delete window.doroGame;
+    delete window.__TESTING__;
+  });
+
+  afterEach(() => {
+    // Restore original values
+    window.doroGame = originalDoroGame;
+    window.__TESTING__ = originalTestingFlag;
+  });
+
+  // 1. Test top-level initialization
+  it('covers top-level new DoroClicker() assignment', async () => {
+    const mockInstance = { test: 'instance' };
+    DoroClickerMock.mockReturnValue(mockInstance);
+
+    await import('../../src/scripts/index.js');
+    
+    expect(DoroClickerMock).toHaveBeenCalledTimes(1);
+    expect(window.doroGame).toBe(mockInstance);
+  });
+
+  // 2. Test DOMContentLoaded path
+  it('covers DOMContentLoaded new DoroClicker() assignment', async () => {
+  window.doroGame = undefined;
+  const mockInstance = { test: 'dom-instance' };
+  DoroClickerMock.mockReturnValue(mockInstance);
+
+  await import('../../src/scripts/index.js');
+  
+  // Trigger DOMContentLoaded - should initialize since doroGame was undefined
+  document.dispatchEvent(new Event('DOMContentLoaded'));
+  
+  expect(DoroClickerMock).toHaveBeenCalledTimes(1);
+  expect(window.doroGame).toBe(mockInstance);
+  });
+
+  // 3. Test error case coverage
+  it('covers error case in new DoroClicker() assignment', async () => {
+    const mockError = new Error('Test error');
+    DoroClickerMock.mockImplementation(() => {
+      throw mockError;
+    });
+
+    await import('../../src/scripts/index.js');
+    
+    expect(console.error).toHaveBeenCalledWith(
+      'Game initialization failed:', 
+      mockError
+    );
+  });
+
+  // 4. Test testing mode fallback
+  it('covers testing fallback assignment', async () => {
+    window.__TESTING__ = {};
+    const mockError = new Error('Test error');
+    DoroClickerMock.mockImplementation(() => {
+      throw mockError;
+    });
+
+    await import('../../src/scripts/index.js');
+    
+    expect(window.doroGame).toEqual({
+      state: {},
+      upgrades: [],
+      autoclickers: [],
+      updateUI: expect.any(Function)
+    });
+  });
+
+
+});
 });

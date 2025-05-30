@@ -38,10 +38,29 @@ class DoroClicker {
     }
 
     destroy() {
-        this.autoclickerSystem.cleanup();
-        this.mechanics.cleanup();
-        this.events.removeAllEventListeners();
-        this.saveSystem.cleanup();
+        try {
+            this.autoclickerSystem?.cleanup();
+        } catch (error) {
+            console.error('Error during autoclicker system cleanup:', error);
+        }
+        
+        try {
+            this.mechanics?.cleanup();
+        } catch (error) {
+            console.error('Error during game mechanics cleanup:', error);
+        }
+        
+        try {
+            this.events?.removeAllEventListeners();
+        } catch (error) {
+            console.error('Error during event listeners removal:', error);
+        }
+        
+        try {
+            this.saveSystem?.cleanup();
+        } catch (error) {
+            console.error('Error during save system cleanup:', error);
+        }
     }
 }
 

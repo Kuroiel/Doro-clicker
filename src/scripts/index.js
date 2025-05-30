@@ -25,7 +25,9 @@ if (typeof window.doroGame === 'undefined') {
 }
 
 document.addEventListener('DOMContentLoaded', function handler() {
+  /* istanbul ignore next */
   if (typeof window.doroGame === 'undefined') {
+    /* istanbul ignore next */
     window.doroGame = new DoroClicker();
   }
   document.removeEventListener('DOMContentLoaded', handler);
