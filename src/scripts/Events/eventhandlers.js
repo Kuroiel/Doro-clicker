@@ -14,30 +14,30 @@ export class EventHandlers {
     }
 
     setupDoroImageListeners() {
-        const doroImage = DOMHelper.getDoroImage();
-        if (!doroImage) return;
+  const doroImage = DOMHelper.getDoroImage();
+  if (!doroImage) return;
 
-        // Remove any existing listeners first
-        doroImage.removeEventListener('click', this._doroClickHandler);
-        
-        // Create new bound handler
-        this._doroClickHandler = (e) => {
-            e.stopPropagation(); // Prevent event bubbling
-            e.preventDefault(); // Prevent default behavior
-            this.game.mechanics.handleClick();
-        };
-        
-        // Add single click listener
-        doroImage.addEventListener('click', this._doroClickHandler);
-        
-        // Keep the visual feedback handlers separate
-        this._addListener(doroImage, 'mousedown', () => {
-            doroImage.style.transform = 'scale(0.95)';
-        });
-        
-        this._addListener(doroImage, 'mouseup', () => {
-            doroImage.style.transform = 'scale(1)';
-        });
+  // Remove existing click listener
+  if (this._doroClickHandler) {
+    doroImage.removeEventListener('click', this._doroClickHandler);
+  }
+
+  // Create and add new click handler
+  this._doroClickHandler = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    this.game.mechanics.handleClick();
+  };
+  this._addListener(doroImage, 'click', this._doroClickHandler);
+  
+  // Visual feedback handlers
+  this._addListener(doroImage, 'mousedown', () => {
+    doroImage.style.transform = 'scale(0.95)';
+  });
+  
+  this._addListener(doroImage, 'mouseup', () => {
+    doroImage.style.transform = 'scale(1)';
+  });
     }
 
     setupUpgradeButtonListeners() {
