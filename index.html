@@ -1,41 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Doro Clicker</title>
-    <link rel="stylesheet" href="./src/styles/main.css">
-</head>
-<body>
+    <link rel="stylesheet" href="./src/styles/main.css" />
+  </head>
+  <body>
     <h1 class="title">Doro Clicker</h1>
-    
+
     <aside class="sidebar">
-        <h2>Upgrades</h2>
-        <div class="view-toggle">
-            <button class="view-button active" data-view="autoclickers">Auto Doros</button>
-            <button class="view-button" data-view="upgrades">Doro Upgrades</button>
-        </div>
-        <div id="autoclickers-container" class="upgrade-view active-view"></div>
-        <div id="upgrades-container" class="upgrade-view"></div>
+      <h2>Upgrades</h2>
+      <div class="view-toggle">
+        <button class="view-button active" data-view="autoclickers">
+          Auto Doros
+        </button>
+        <button class="view-button" data-view="upgrades">Doro Upgrades</button>
+      </div>
+      <div id="autoclickers-container" class="upgrade-view active-view"></div>
+      <div id="upgrades-container" class="upgrade-view"></div>
     </aside>
 
     <main class="game-area">
-        <div id="score-display">Doros: 0</div>
-        <img src="./src/assets/doro.png" alt="Doro" id="doro-image">
+      <div id="score-display">Doros: 0</div>
+      <img src="./src/assets/doro.png" alt="Doro" id="doro-image" />
     </main>
 
     <!-- Updated script path -->
     <script type="module" src="./src/scripts/index.js"></script>
 
     <div class="stats-overlay" id="stats-overlay">
-        <h2>Game Statistics</h2>
-        <div id="stats-content">
-            <p>Manual Clicks: <span id="stat-clicks">0</span></p>
-            <p>Doros/Second: <span id="stat-dps">0</span></p>
-            <p>Total Doros: <span id="stat-total">0</span></p>
-        </div>
-        <button id="close-stats">Close</button>
+      <h2>Game Statistics</h2>
+      <div id="stats-content">
+        <p>Manual Clicks: <span id="stat-clicks">0</span></p>
+        <p>Doros/Second: <span id="stat-dps">0</span></p>
+        <p>Total Doros: <span id="stat-total">0</span></p>
+      </div>
+      <button id="close-stats">Close</button>
     </div>
     <button class="stats-button" id="show-stats">View Stats</button>
-</body>
+  </body>
 </html>

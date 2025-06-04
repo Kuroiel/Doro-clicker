@@ -3,13 +3,13 @@ export class DOMHelper {
   // ======================
   // Score Related Methods
   // ======================
-  
+
   /**
    * Gets the score display element
    * @returns {HTMLElement} The score display element
    */
   static getScoreElement() {
-    return document.getElementById('score-display');
+    return document.getElementById("score-display");
   }
 
   /**
@@ -17,19 +17,19 @@ export class DOMHelper {
    * @returns {number} The current doros count (0 if not found)
    */
   static getDorosCount() {
-    return parseInt(this.getScoreElement().textContent.split(' ')[1]) || 0;
+    return parseInt(this.getScoreElement().textContent.split(" ")[1]) || 0;
   }
 
   // ========================
   // Upgrade Related Methods
   // ========================
-  
+
   /**
    * Gets the upgrades container element
    * @returns {HTMLElement} The upgrades container
    */
   static getUpgradesContainer() {
-    return document.getElementById('upgrades-container');
+    return document.getElementById("upgrades-container");
   }
 
   /**
@@ -37,7 +37,7 @@ export class DOMHelper {
    * @returns {Array<HTMLElement>} Array of upgrade button elements
    */
   static getUpgradeButtons() {
-    return Array.from(document.querySelectorAll('.upgrade-button'));
+    return Array.from(document.querySelectorAll(".upgrade-button"));
   }
 
   /**
@@ -54,19 +54,19 @@ export class DOMHelper {
    * @returns {Array<HTMLElement>} Array of upgrade view elements
    */
   static getUpgradeViews() {
-    return Array.from(document.querySelectorAll('.upgrade-view'));
+    return Array.from(document.querySelectorAll(".upgrade-view"));
   }
 
   // =====================
   // Stats Related Methods
   // =====================
-  
+
   /**
    * Gets the stats overlay element
    * @returns {HTMLElement} The stats overlay container
    */
   static getStatsElement() {
-    return document.getElementById('stats-overlay');
+    return document.getElementById("stats-overlay");
   }
 
   /**
@@ -74,17 +74,17 @@ export class DOMHelper {
    * @returns {Object} Object containing references to stat elements
    */
   static getStatElements() {
-        const statsElement = document.getElementById('stats-overlay');
-        if (!statsElement) {
-            console.warn('Stats overlay not found');
-            return null;
-        }
-        
-        return {
-            clicks: statsElement.querySelector('#stat-clicks'),
-            dps: statsElement.querySelector('#stat-dps'),
-            total: statsElement.querySelector('#stat-total')
-        };
+    const statsElement = document.getElementById("stats-overlay");
+    if (!statsElement) {
+      console.warn("Stats overlay not found");
+      return null;
+    }
+
+    return {
+      clicks: statsElement.querySelector("#stat-clicks"),
+      dps: statsElement.querySelector("#stat-dps"),
+      total: statsElement.querySelector("#stat-total"),
+    };
   }
 
   /**
@@ -92,7 +92,7 @@ export class DOMHelper {
    * @returns {HTMLElement} The show stats button
    */
   static getShowStatsButton() {
-    return document.getElementById('show-stats');
+    return document.getElementById("show-stats");
   }
 
   /**
@@ -100,31 +100,31 @@ export class DOMHelper {
    * @returns {HTMLElement} The close stats button
    */
   static getCloseStatsButton() {
-    return document.getElementById('close-stats');
+    return document.getElementById("close-stats");
   }
 
   // ========================
   // Autoclicker Related Methods
   // ========================
-  
+
   /**
    * Gets the autoclickers container
    * @returns {HTMLElement} The autoclickers container element
    */
   static getAutoclickersContainer() {
-    return document.getElementById('autoclickers-container');
+    return document.getElementById("autoclickers-container");
   }
 
   // ===================
   // UI Element Methods
   // ===================
-  
+
   /**
    * Gets the main doro image element
    * @returns {HTMLElement} The doro image element
    */
   static getDoroImage() {
-    return document.getElementById('doro-image');
+    return document.getElementById("doro-image");
   }
 
   /**
@@ -132,7 +132,7 @@ export class DOMHelper {
    * @returns {HTMLElement} The sidebar element
    */
   static getSidebarElement() {
-    return document.querySelector('.sidebar');
+    return document.querySelector(".sidebar");
   }
 
   /**
@@ -140,13 +140,13 @@ export class DOMHelper {
    * @returns {Array<HTMLElement>} Array of view button elements
    */
   static getViewButtons() {
-    return Array.from(document.querySelectorAll('.view-button'));
+    return Array.from(document.querySelectorAll(".view-button"));
   }
 
   // ===================
   // Utility Methods
   // ===================
-  
+
   /**
    * Sets text content of an element
    * @param {HTMLElement} element - The target element
@@ -162,7 +162,7 @@ export class DOMHelper {
    * @param {boolean} visible - Whether to show the element
    */
   static toggleVisibility(element, visible) {
-    if (element) element.style.display = visible ? 'block' : 'none';
+    if (element) element.style.display = visible ? "block" : "none";
   }
 
   /**
@@ -188,9 +188,9 @@ export class DOMHelper {
    */
   static addClass(element, className) {
     if (element && className) {
-        element.classList.add(className);
+      element.classList.add(className);
     }
-}
+  }
 
   /**
    * Removes a class from an element
@@ -199,9 +199,9 @@ export class DOMHelper {
    */
   static removeClass(element, className) {
     if (element && className) {
-        element.classList.remove(className);
+      element.classList.remove(className);
     }
-}
+  }
 
   /**
    * Toggles a class on an element based on a condition
@@ -212,42 +212,41 @@ export class DOMHelper {
 
   static toggleClass(element, className, condition) {
     if (element && className) {
-        if (condition) {
-            this.addClass(element, className);
-        } else {
-            this.removeClass(element, className);
-        }
+      if (condition) {
+        this.addClass(element, className);
+      } else {
+        this.removeClass(element, className);
+      }
     }
-}
+  }
   /**
- * Gets the numeric Doros count from the score display
- * @returns {number} Current Doros count (0 if not found/parse fails)
- */
-static getDorosCount() {
-  try {
+   * Gets the numeric Doros count from the score display
+   * @returns {number} Current Doros count (0 if not found/parse fails)
+   */
+  static getDorosCount() {
+    try {
       const scoreElement = this.getScoreElement();
       if (!scoreElement) return 0;
-      return parseInt(scoreElement.textContent.split(' ')[1]) || 0;
-  } catch (error) {
-      console.error('Error getting Doros count:', error);
+      return parseInt(scoreElement.textContent.split(" ")[1]) || 0;
+    } catch (error) {
+      console.error("Error getting Doros count:", error);
       return 0;
+    }
   }
-}
 
+  // ======================
+  // Reset UI Methods
+  // ======================
 
-// ======================
-// Reset UI Methods
-// ======================
-
-/**
- * Creates reset confirmation modal
- * @returns {HTMLElement} The modal element
- */
-static createResetModal() {
-  const modal = document.createElement('div');
-  modal.id = 'reset-modal';
-  modal.className = 'modal-overlay';
-  modal.innerHTML = `
+  /**
+   * Creates reset confirmation modal
+   * @returns {HTMLElement} The modal element
+   */
+  static createResetModal() {
+    const modal = document.createElement("div");
+    modal.id = "reset-modal";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
     <div class="modal-content">
       <p>This will reset your game<br>Are you sure you want to reset?</p>
       <div class="modal-buttons">
@@ -256,33 +255,32 @@ static createResetModal() {
       </div>
     </div>
   `;
-  return modal;
-}
-
-/**
- * Gets the reset button element
- * @returns {HTMLElement} The reset button
- */
-static getResetButton() {
-  return document.getElementById('reset-button');
-}
-
-/**
- * Shows the reset confirmation modal
- */
-static showResetModal() {
-  const modal = this.createResetModal();
-  document.body.appendChild(modal);
-}
-
-/**
- * Hides the reset confirmation modal
- */
-static hideResetModal() {
-  const modal = document.getElementById('reset-modal');
-  if (modal) {
-    document.body.removeChild(modal);
+    return modal;
   }
-}
 
+  /**
+   * Gets the reset button element
+   * @returns {HTMLElement} The reset button
+   */
+  static getResetButton() {
+    return document.getElementById("reset-button");
+  }
+
+  /**
+   * Shows the reset confirmation modal
+   */
+  static showResetModal() {
+    const modal = this.createResetModal();
+    document.body.appendChild(modal);
+  }
+
+  /**
+   * Hides the reset confirmation modal
+   */
+  static hideResetModal() {
+    const modal = document.getElementById("reset-modal");
+    if (modal) {
+      document.body.removeChild(modal);
+    }
+  }
 }
