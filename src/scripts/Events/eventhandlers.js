@@ -74,7 +74,9 @@ export class EventHandlers {
 
     this._addListener(showStatsButton, "click", (e) => {
       e.stopPropagation();
-      statsElement.style.display = "block";
+      // Toggle the display instead of always setting to 'block'
+      statsElement.style.display =
+        statsElement.style.display === "block" ? "none" : "block";
     });
 
     this._addListener(closeStatsButton, "click", (e) => {
