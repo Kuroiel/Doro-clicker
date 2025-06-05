@@ -50,7 +50,13 @@ export class EventHandlers {
         const upgradeId = parseInt(button.dataset.id);
         if (!isNaN(upgradeId)) {
           button.classList.add("processing");
-          this.game.mechanics.debouncePurchase(upgradeId);
+          // Replace debouncePurchase with direct purchaseUpgrade call
+          const purchased = this.game.mechanics.purchaseUpgrade(upgradeId);
+          if (purchased) {
+            // Visual feedback for successful purchase
+            button.classList.add("purchased");
+            setTimeout(() => button.classList.remove("purchased"), 100);
+          }
           requestAnimationFrame(() => button.classList.remove("processing"));
         }
       }

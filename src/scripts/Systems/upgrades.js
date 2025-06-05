@@ -37,18 +37,24 @@ export const upgrades = [
       return costLevels[Math.min(this.purchased, costLevels.length - 1)];
     },
     isVisible: function (gameState) {
-      // Only show if there are purchased Lurking Doros
+      // Get the Lurking Doro autoclicker
       const lurkingDoro = gameState.autoclickers.find((a) => a.id === 2);
-      if (!lurkingDoro || lurkingDoro.purchased <= 0) return false;
+      if (!lurkingDoro) return false;
 
+      // Define thresholds for each upgrade level
       const thresholds = [10, 20, 50, 100];
-      const nextThreshold = thresholds[this.purchased];
 
-      // Only show if we haven't maxed out purchases and threshold is met
-      return (
-        this.purchased < thresholds.length &&
-        lurkingDoro.purchased >= nextThreshold
-      );
+      // If all upgrades are purchased, don't show
+      if (this.purchased >= thresholds.length) return false;
+
+      // Check if we've reached the threshold for the next purchase
+      const nextThreshold = thresholds[this.purchased];
+      const hasReachedThreshold = lurkingDoro.purchased >= nextThreshold;
+
+      // Only show if we're at the threshold AND either:
+      // 1. We haven't purchased this level yet, OR
+      // 2. We're seeing if we should show the next level
+      return hasReachedThreshold;
     },
     priority: 1,
   },
