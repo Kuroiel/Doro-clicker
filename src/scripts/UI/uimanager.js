@@ -29,34 +29,23 @@ export class UIManager {
 
     buttons.forEach((button) => {
       const upgradeId = parseInt(button.dataset.id);
-      const upgrade =
-        this.game.autoclickers.find((u) => u.id === upgradeId) ||
-        this.game.upgrades.find((u) => u.id === upgradeId);
+      if (!autoclickerIds.includes(upgradeId)) return;
 
+      const upgrade = this.game.autoclickers.find((u) => u.id === upgradeId);
       if (!upgrade) return;
 
-      const formatter = (num, decimals = 0) =>
-        this.formatter.formatNumber(
-          num,
-          decimals,
-          null,
-          decimals === 0,
-          "cost"
-        );
-
-      // Completely rebuild button content including tooltips
-      button.innerHTML = `
-            <div class="upgrade-header">
-                ${UpgradeRenderer.renderFirstLine(upgrade)}
-            </div>
-            ${UpgradeRenderer.renderSecondLine(upgrade, formatter)}
-            ${UpgradeRenderer.renderTooltip(upgrade, formatter)}
-        `;
-
-      // Update affordance state
+      // Only update the critical parts that change frequently
       const canAfford = this.game.mechanics.canAfford(upgrade);
-      button.classList.toggle("affordable", canAfford);
       button.disabled = !canAfford;
+      button.classList.toggle("affordable", canAfford);
+
+      // Only update the owned count if needed
+      const ownedSpan = button.querySelector(
+        ".upgrade-second-line span:last-child"
+      );
+      if (ownedSpan) {
+        ownedSpan.textContent = `(Owned: ${upgrade.purchased})`;
+      }
     });
   }
 
@@ -285,8 +274,6 @@ export class UIManager {
   }
 
   updateButtonStates() {
-    if (this._isRendering) return;
-
     const buttons = DOMHelper.getUpgradeButtons();
     buttons.forEach((button) => {
       const upgradeId = parseInt(button.dataset.id);
@@ -296,35 +283,8 @@ export class UIManager {
 
       if (upgrade) {
         const canAfford = this.game.mechanics.canAfford(upgrade);
-        const currentlyAffordable = button.classList.contains("affordable");
-
-        if (canAfford !== currentlyAffordable) {
-          button.classList.toggle("affordable", canAfford);
-          button.disabled = !canAfford;
-
-          // Only update content if affordance changed
-          if (canAfford) {
-            const formatter = (num, decimals = 0) =>
-              this.formatter.formatNumber(
-                num,
-                decimals,
-                null,
-                decimals === 0,
-                "cost"
-              );
-
-            button.innerHTML = `
-                            <div class="upgrade-header">
-                                ${UpgradeRenderer.renderFirstLine(upgrade)}
-                            </div>
-                            ${UpgradeRenderer.renderSecondLine(
-                              upgrade,
-                              formatter
-                            )}
-                            ${UpgradeRenderer.renderTooltip(upgrade, formatter)}
-                        `;
-          }
-        }
+        button.disabled = !canAfford;
+        button.classList.toggle("affordable", canAfford);
       }
     });
   }
