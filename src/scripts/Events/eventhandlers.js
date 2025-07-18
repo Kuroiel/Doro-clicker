@@ -78,23 +78,28 @@ export class EventHandlers {
 
     if (!statsElement || !showStatsButton || !closeStatsButton) return;
 
-    this._addListener(showStatsButton, "click", (e) => {
-      e.stopPropagation();
-      // Toggle the display instead of always setting to 'block'
-      statsElement.style.display =
-        statsElement.style.display === "block" ? "none" : "block";
-    });
+    this._addListener(document.body, "click", (e) => {
+      const target = e.target;
 
-    this._addListener(closeStatsButton, "click", (e) => {
-      e.stopPropagation();
-      statsElement.style.display = "none";
-    });
+      // Handle showing the stats
+      if (target.closest("#show-stats")) {
+        e.stopPropagation();
+        statsElement.style.display =
+          statsElement.style.display === "block" ? "none" : "block";
+        return; // Stop further processing
+      }
 
-    this._addListener(document, "click", (e) => {
+      // Handle closing the stats
+      if (target.closest("#close-stats")) {
+        e.stopPropagation();
+        statsElement.style.display = "none";
+        return; // Stop further processing
+      }
+
+      // Handle clicking outside the stats overlay to close it
       if (
         statsElement.style.display === "block" &&
-        !statsElement.contains(e.target) &&
-        e.target !== showStatsButton
+        !target.closest("#stats-overlay") // Check if the click was outside the overlay
       ) {
         statsElement.style.display = "none";
       }

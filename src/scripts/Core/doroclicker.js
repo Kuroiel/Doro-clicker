@@ -32,8 +32,7 @@ class DoroClicker {
     this.autoclickerSystem.setup();
     this.events.setupAllEventListeners();
     this.saveSystem.init();
-    this.ui.switchView("autoclickers");
-    this.ui.updateUI();
+    this.viewManager.switchView("autoclickers");
   }
 
   destroy() {

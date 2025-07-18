@@ -22,10 +22,6 @@ export class ViewManager {
     if (typeof DOMHelper.getUpgradeViews === "function") {
       this._updateViewContainers();
     }
-
-    if (this.game.ui && typeof this.game.ui.updateUI === "function") {
-      this.game.ui.updateUI();
-    }
   }
 
   _updateViewButtons() {
@@ -59,9 +55,9 @@ export class ViewManager {
         if (
           isTarget &&
           this.game.ui &&
-          typeof this.game.ui.renderUpgrades === "function"
+          typeof this.game.ui.renderAllItems === "function"
         ) {
-          this.game.ui.renderUpgrades();
+          this.game.ui.renderAllItems();
         }
       });
     } catch (e) {

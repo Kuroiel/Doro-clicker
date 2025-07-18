@@ -13,7 +13,7 @@ export class UpgradeRenderer {
     return `
             <div class="upgrade-first-line">
                 <img src="${upgrade.icon}" alt="${upgrade.name}" class="upgrade-icon">
-                <span>&nbsp; ${upgrade.name}</span>
+                <span>  ${upgrade.name}</span>
             </div>
         `;
   }
@@ -25,16 +25,12 @@ export class UpgradeRenderer {
    * @returns {string} HTML string for the second line
    */
   static renderSecondLine(upgrade, formatter) {
-    // Get cost from cost() function if it exists, otherwise use baseCost
-    const cost =
-      typeof upgrade.cost === "function" ? upgrade.cost() : upgrade.baseCost;
+    // --- START OF FIX ---
+    // The 'cost' property is a getter, not a function. Access it directly.
+    const cost = upgrade.cost;
+    // --- END OF FIX ---
 
-    // Format cost based on test requirements:
-    // - With formatter: use formatter (should show 1,000)
-    // - Without formatter: show raw number (should show 1000)
     const formattedCost = formatter ? formatter(cost) : cost.toString();
-
-    // Determine if we should show purchased count (only for autoclickers)
     const showPurchased = upgrade.type === "autoclicker";
 
     return `
@@ -44,23 +40,17 @@ export class UpgradeRenderer {
         </div>
     `;
   }
-
   // Fallback formatting when no formatter provided
   static fallbackFormat(num, decimals) {
-    // Handle non-numbers or NaN
     if (typeof num !== "number" || isNaN(num)) {
       console.warn("Invalid number passed to fallbackFormat:", num);
       return "0";
     }
-
-    // Format with thousand separators for whole numbers
     if (decimals === 0) {
       const parts = num.toString().split(".");
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-      return parts[0]; // Only return integer part
+      return parts[0];
     }
-
-    // Otherwise format with decimals
     const parts = num.toFixed(decimals).split(".");
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return parts.join(".");
@@ -75,12 +65,11 @@ export class UpgradeRenderer {
   static renderTooltip(upgrade, formatter) {
     if (!upgrade.description || !upgrade.effectDescription) return "";
 
-    // Handle both function and string effect descriptions
     let effectText;
     if (typeof upgrade.effectDescription === "function") {
       effectText = upgrade.effectDescription(
         upgrade.value,
-        upgrade.purchased, // Pass current purchased count
+        upgrade.purchased,
         formatter
       );
     } else {
@@ -107,6 +96,8 @@ export class UpgradeRenderer {
    * @returns {string} HTML string for the complete button
    */
   static renderUpgradeButton(upgrade, canAfford, formatter) {
+    // This function receives 'canAfford' as an argument, so we trust it.
+    // The logic inside renderSecondLine will handle displaying the correct cost.
     return `
         <button 
             class="upgrade-button ${canAfford ? "affordable" : ""}"
@@ -119,6 +110,6 @@ export class UpgradeRenderer {
             ${this.renderSecondLine(upgrade, formatter)}
             ${this.renderTooltip(upgrade, formatter)}
         </button>
-        `;
+    `;
   }
 }

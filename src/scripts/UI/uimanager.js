@@ -6,79 +6,33 @@ export class UIManager {
   constructor(game) {
     this.game = game;
     this.formatter = new Formatters();
-    this._lastDoros = 0;
-    this._needsUpgradeRender = true;
-    this._isRendering = false;
+    this._needsFullRender = true;
+    this._lastAffordabilityCheck = 0;
+    this.AFFORDABILITY_CHECK_INTERVAL = 250;
 
-    // Stronger binding for state updates
-    this.handleStateUpdate = this.handleStateUpdate.bind(this);
-    this.game.state.addListener(this.handleStateUpdate);
-  }
-
-  handleStateUpdate() {
-    // Immediate response to state changes
-    this.updateScoreDisplay();
-    this.updateStatsDisplay();
-    this.refreshAutoclickerButtons();
-    this.updateAllButtonContents();
-  }
-
-  refreshAutoclickerButtons() {
-    const buttons = DOMHelper.getUpgradeButtons();
-    const autoclickerIds = this.game.autoclickers.map((a) => a.id);
-
-    buttons.forEach((button) => {
-      const upgradeId = parseInt(button.dataset.id);
-      if (!autoclickerIds.includes(upgradeId)) return;
-
-      const upgrade = this.game.autoclickers.find((u) => u.id === upgradeId);
-      if (!upgrade) return;
-
-      // Only update the critical parts that change frequently
-      const canAfford = this.game.mechanics.canAfford(upgrade);
-      button.disabled = !canAfford;
-      button.classList.toggle("affordable", canAfford);
-
-      // Only update the owned count if needed
-      const ownedSpan = button.querySelector(
-        ".upgrade-second-line span:last-child"
-      );
-      if (ownedSpan) {
-        ownedSpan.textContent = `(Owned: ${upgrade.purchased})`;
-      }
+    // The state listener is the primary driver for all passive UI updates.
+    this.game.state.addListener(() => {
+      requestAnimationFrame(() => {
+        this.updateScoreDisplay();
+        this.updateStatsDisplay();
+        this.updateAllAffordability();
+      });
     });
   }
 
-  updateUI() {
-    this.updateScoreDisplay();
-    this.updateStatsDisplay();
+  // EFFICIENT: This is now the main affordability update loop.
+  // It only toggles classes and the disabled property, which is very fast.
+  updateAllAffordability() {
+    const allItems = [...this.game.autoclickers, ...this.game.upgrades];
 
-    const dorosChangedSignificantly =
-      Math.abs(this.game.state.doros - this._lastDoros) > 1;
-
-    if (this._needsUpgradeRender || dorosChangedSignificantly) {
-      this.renderUpgrades();
-      this._lastDoros = this.game.state.doros;
-      this._needsUpgradeRender = false;
-    } else {
-      // Lightweight update path
-      this.updateButtonStates(); // More efficient than updateAllButtonContents
+    for (const item of allItems) {
+      const button = DOMHelper.getUpgradeButton(item.id);
+      if (button) {
+        const canAfford = this.game.mechanics.canAfford(item);
+        DOMHelper.toggleClass(button, "affordable", canAfford);
+        button.disabled = !canAfford;
+      }
     }
-
-    // Keep autoclicker affordance check
-    this.updateAutoclickerAffordance();
-  }
-
-  forceFullUpdate(updateButtons = true) {
-    this._needsUpgradeRender = true;
-    this.updateScoreDisplay();
-    this.updateStatsDisplay();
-
-    if (updateButtons) {
-      this.renderUpgrades();
-    }
-
-    this._lastDoros = this.game.state.doros;
   }
 
   updateScoreDisplay() {
@@ -96,221 +50,132 @@ export class UIManager {
     const stats = DOMHelper.getStatElements();
     if (!stats) return;
 
-    try {
-      // Format numbers appropriately
-      const clicks = this.formatter.formatNumber(
-        this.game.state.manualClicks,
-        0
-      );
-      const total = this.formatter.formatNumber(
-        Math.floor(this.game.state.totalDoros),
-        0
-      );
+    const clicks = this.formatter.formatNumber(this.game.state.manualClicks, 0);
+    const total = this.formatter.formatNumber(
+      Math.floor(this.game.state.totalDoros),
+      0
+    );
+    const totalDPS = this.game.state.getTotalDPS();
+    const dps = this.formatter.formatNumber(totalDPS, 1);
 
-      // Calculate and format DPS
-      const totalDPS = this.game.state.getTotalDPS();
-      const dps = this.formatter.formatNumber(totalDPS, 1);
-
-      // Update DOM elements
-      DOMHelper.setText(stats.clicks, clicks);
-      DOMHelper.setText(stats.dps, dps);
-      DOMHelper.setText(stats.total, total);
-    } catch (error) {
-      console.error("Error updating stats display:", error);
-    }
+    DOMHelper.setText(stats.clicks, clicks);
+    DOMHelper.setText(stats.dps, dps);
+    DOMHelper.setText(stats.total, total);
   }
 
-  renderUpgrades() {
-    if (this._isRendering) return;
-    this._isRendering = true;
+  // Renders all items from scratch. Should only be called on init, load, or view switch.
+  renderAllItems() {
+    const autoContainer = DOMHelper.getAutoclickersContainer();
+    const upgradeContainer = DOMHelper.getUpgradesContainer();
 
-    try {
-      const autoContainer = DOMHelper.getAutoclickersContainer();
-      const upgradeContainer = DOMHelper.getUpgradesContainer();
-
-      if (autoContainer) autoContainer.innerHTML = "";
-      if (upgradeContainer) upgradeContainer.innerHTML = "";
-
-      const consistentFormatter = (num, decimals = 0) =>
-        this.formatter.formatNumber(
-          num,
-          decimals,
-          null,
-          decimals === 0,
-          "cost"
-        );
-
-      // Render autoclickers
-      this.game.autoclickers.forEach((upgrade) => {
-        const canAfford = this.game.mechanics.canAfford(upgrade);
-        autoContainer.insertAdjacentHTML(
-          "beforeend",
-          UpgradeRenderer.renderUpgradeButton(
-            upgrade,
-            canAfford,
-            consistentFormatter
-          )
-        );
-      });
-
-      // Render upgrades
-      const { visibleUpgrades, hiddenUpgrades } = this.sortUpgrades();
-      [...visibleUpgrades, ...hiddenUpgrades].forEach((upgrade) => {
-        const canAfford = this.game.mechanics.canAfford(upgrade);
-        upgradeContainer.insertAdjacentHTML(
-          "beforeend",
-          UpgradeRenderer.renderUpgradeButton(
-            upgrade,
-            canAfford,
-            consistentFormatter
-          )
-        );
-      });
-
-      this.updateStatsDisplay();
-    } finally {
-      this._isRendering = false;
-    }
-  }
-
-  sortUpgrades() {
-    const visibleUpgrades = [];
-    const hiddenUpgrades = [];
-
-    this.game.upgrades.forEach((upgrade) => {
-      try {
-        if (typeof upgrade.isVisible !== "function") {
-          visibleUpgrades.push(upgrade);
-          return;
-        }
-
-        const gameStateContext = {
-          autoclickers: this.game.autoclickers,
-          getTotalDPS: () => this.game.state.getTotalDPS(),
-          state: this.game.state,
-          upgrades: this.game.upgrades,
-        };
-
-        const isVisible = upgrade.isVisible(gameStateContext);
-
-        if (isVisible) {
-          visibleUpgrades.push(upgrade);
-        } else if (upgrade.purchased > 0) {
-          hiddenUpgrades.push(upgrade);
-        }
-      } catch (error) {
-        console.error(
-          `Error checking visibility for upgrade ${upgrade.id}:`,
-          error
-        );
-        visibleUpgrades.push(upgrade);
-      }
-    });
-
-    hiddenUpgrades.sort((a, b) => (b.priority || 0) - (a.priority || 0));
-
-    return { visibleUpgrades, hiddenUpgrades };
-  }
-
-  updateAllButtonContents() {
-    const buttons = DOMHelper.getUpgradeButtons();
-    buttons.forEach((button) => {
-      const upgradeId = parseInt(button.dataset.id);
-      const upgrade =
-        this.game.autoclickers.find((u) => u.id === upgradeId) ||
-        this.game.upgrades.find((u) => u.id === upgradeId);
-
-      if (upgrade) {
-        const consistentFormatter = (num, decimals = 0) =>
-          this.formatter.formatNumber(
-            num,
-            decimals,
-            null,
-            decimals === 0,
-            "cost"
-          );
-
-        const canAfford = this.game.mechanics.canAfford(upgrade);
-        const newContent = `
-                    <div class="upgrade-header">
-                        ${UpgradeRenderer.renderFirstLine(upgrade)}
-                    </div>
-                    ${UpgradeRenderer.renderSecondLine(
-                      upgrade,
-                      consistentFormatter
-                    )}
-                    ${UpgradeRenderer.renderTooltip(
-                      upgrade,
-                      consistentFormatter
-                    )}
-                `;
-
-        button.innerHTML = newContent;
-        button.classList.toggle("affordable", canAfford);
-        button.disabled = !canAfford;
-      }
-    });
-  }
-
-  switchView(view) {
-    if (this.game.viewManager) {
-      this.game.viewManager.switchView(view);
-    } else {
-      console.error("ViewManager not initialized");
-    }
-  }
-  updateAutoclickerAffordance() {
-    const buttons = DOMHelper.getUpgradeButtons();
-    buttons.forEach((button) => {
-      const upgradeId = parseInt(button.dataset.id);
-      const upgrade = this.game.autoclickers.find((u) => u.id === upgradeId);
-
-      if (upgrade) {
-        const canAfford = this.game.mechanics.canAfford(upgrade);
-        button.classList.toggle("affordable", canAfford);
-        button.disabled = !canAfford;
-      }
-    });
-  }
-
-  updateButtonStates() {
-    const buttons = DOMHelper.getUpgradeButtons();
-    buttons.forEach((button) => {
-      const upgradeId = parseInt(button.dataset.id);
-      const upgrade =
-        this.game.autoclickers.find((u) => u.id === upgradeId) ||
-        this.game.upgrades.find((u) => u.id === upgradeId);
-
-      if (upgrade) {
-        const canAfford = this.game.mechanics.canAfford(upgrade);
-        button.disabled = !canAfford;
-        button.classList.toggle("affordable", canAfford);
-      }
-    });
-  }
-
-  refreshUpgradeButton(upgradeId) {
-    const button = DOMHelper.getUpgradeButton(upgradeId);
-    if (!button) return;
-
-    const upgrade =
-      this.game.autoclickers.find((u) => u.id === upgradeId) ||
-      this.game.upgrades.find((u) => u.id === upgradeId);
-    if (!upgrade) return;
+    if (autoContainer) autoContainer.innerHTML = "";
+    if (upgradeContainer) upgradeContainer.innerHTML = "";
 
     const formatter = (num, decimals = 0) =>
       this.formatter.formatNumber(num, decimals, null, decimals === 0, "cost");
 
-    button.innerHTML = `
-        <div class="upgrade-header">
-            ${UpgradeRenderer.renderFirstLine(upgrade)}
-        </div>
-        ${UpgradeRenderer.renderSecondLine(upgrade, formatter)}
-        ${UpgradeRenderer.renderTooltip(upgrade, formatter)}
-    `;
+    // Render autoclickers
+    this.game.autoclickers.forEach((item) => {
+      autoContainer.insertAdjacentHTML(
+        "beforeend",
+        UpgradeRenderer.renderUpgradeButton(item, false, formatter)
+      );
+    });
 
-    const canAfford = this.game.mechanics.canAfford(upgrade);
-    button.classList.toggle("affordable", canAfford);
-    button.disabled = !canAfford;
+    // Render upgrades based on visibility
+    const { visibleUpgrades } = this.sortUpgrades();
+    visibleUpgrades.forEach((item) => {
+      upgradeContainer.insertAdjacentHTML(
+        "beforeend",
+        UpgradeRenderer.renderUpgradeButton(item, false, formatter)
+      );
+    });
+
+    // After rendering, immediately check for what can be afforded.
+    this.updateAllAffordability();
+    this._needsFullRender = false;
+  }
+
+  // Public method to trigger a full redraw.
+  forceFullUpdate() {
+    this._needsFullRender = true;
+    this.renderAllItems();
+    this.updateStatsDisplay();
+  }
+
+  sortUpgrades() {
+    const visibleUpgrades = [];
+    const hiddenUpgrades = []; // Can be used for a "purchased upgrades" view later
+    const gameStateContext = {
+      autoclickers: this.game.autoclickers,
+      getTotalDPS: () => this.game.state.getTotalDPS(),
+      state: this.game.state,
+      upgrades: this.game.upgrades,
+    };
+
+    this.game.upgrades.forEach((upgrade) => {
+      if (upgrade.isVisible(gameStateContext)) {
+        visibleUpgrades.push(upgrade);
+      } else {
+        hiddenUpgrades.push(upgrade);
+      }
+    });
+
+    visibleUpgrades.sort((a, b) => (a.priority || 0) - (b.priority || 0));
+    return { visibleUpgrades, hiddenUpgrades };
+  }
+
+  // LIGHTWEIGHT: This function now only updates text content, not the whole element.
+  refreshUpgradeButton(upgradeId) {
+    const button = DOMHelper.getUpgradeButton(upgradeId);
+    if (!button) {
+      // If the button doesn't exist, it might have just become visible.
+      // A full render is the safest way to handle this.
+      this.forceFullUpdate();
+      return;
+    }
+
+    const item =
+      this.game.autoclickers.find((u) => u.id === upgradeId) ||
+      this.game.upgrades.find((u) => u.id === upgradeId);
+    if (!item) return;
+
+    const formatter = (num, decimals = 0) =>
+      this.formatter.formatNumber(num, decimals, null, decimals === 0, "cost");
+
+    // Update cost text
+    const costSpan = button.querySelector(
+      ".upgrade-second-line > span:first-child"
+    );
+    if (costSpan) {
+      costSpan.textContent = `Cost: ${formatter(item.cost)} Doros`;
+    }
+
+    // Update owned text (for autoclickers)
+    if (item.type === "autoclicker") {
+      const ownedSpan = button.querySelector(
+        ".upgrade-second-line span:last-child"
+      );
+      if (ownedSpan) ownedSpan.textContent = `(Owned: ${item.purchased})`;
+    }
+
+    // Update tooltip content
+    const oldTooltip = button.querySelector(".upgrade-tooltip");
+    if (oldTooltip) {
+      const newTooltipHTML = UpgradeRenderer.renderTooltip(item, formatter);
+      // Use a helper to safely create and replace the element
+      DOMHelper.replaceElement(oldTooltip, newTooltipHTML);
+    }
+
+    // If an upgrade is no longer visible after purchase (e.g., maxed out), re-render.
+    if (
+      item.type !== "autoclicker" &&
+      !item.isVisible({
+        ...this.game,
+        getTotalDPS: () => this.game.state.getTotalDPS(),
+      })
+    ) {
+      this.forceFullUpdate();
+    }
   }
 }

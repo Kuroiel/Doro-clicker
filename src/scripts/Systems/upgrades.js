@@ -1,30 +1,89 @@
-// upgrades.js - Add the new upgrade to the array
+import { CostCalculations } from "./utils.js";
+
+class Upgrade {
+  constructor(config) {
+    this.id = config.id;
+    this.name = config.name;
+    this.type = config.type;
+    this.baseCost = config.baseCost;
+    this.value = config.value;
+    this.purchased = 0;
+    this.icon = config.icon;
+    this.description = config.description;
+    this.effectDescription = config.effectDescription;
+    this.costFunction = config.costFunction || "flatCost";
+    this.visibilityConditions = config.visibilityConditions || [];
+    this.priority = config.priority || 0;
+    this.targetAutoclickerId = config.targetAutoclickerId || null;
+    this.maxPurchases = config.maxPurchases || Infinity; // New property
+    this.prerequisiteUpgradeId = config.prerequisiteUpgradeId || null; // Renamed for clarity
+  }
+
+  get cost() {
+    return CostCalculations[this.costFunction](this.baseCost, this.purchased);
+  }
+
+  canPurchase() {
+    return this.purchased < this.maxPurchases;
+  }
+
+  isVisible(gameState) {
+    // Hide if we've reached max purchases
+    if (this.purchased >= this.maxPurchases) {
+      return false;
+    }
+
+    // Check prerequisite upgrade
+    if (this.prerequisiteUpgradeId) {
+      const prereq = gameState.upgrades.find(
+        (u) => u.id === this.prerequisiteUpgradeId
+      );
+      if (!prereq || prereq.purchased < prereq.maxPurchases) {
+        return false;
+      }
+    }
+
+    // Check all other visibility conditions
+    return this.visibilityConditions.every((condition) => {
+      switch (condition.type) {
+        case "MIN_AUTOCLICKER_LEVEL":
+          const ac = gameState.autoclickers.find(
+            (a) => a.id === condition.autoclickerId
+          );
+          return ac && ac.purchased >= condition.level;
+        case "MAX_UPGRADE_LEVEL":
+          return this.purchased < condition.maxLevel;
+        case "MIN_TOTAL_DPS":
+          return gameState.getTotalDPS() >= condition.threshold;
+        default:
+          return true;
+      }
+    });
+  }
+}
+
+// Instantiate and export upgrades directly
 export const upgrades = [
-  {
+  new Upgrade({
     id: 1,
     name: "Doro Power",
-    type: "multiplier",
+    type: "clickMultiplier",
     baseCost: 10,
     value: 1,
-    purchased: 0,
     icon: "./src/assets/dorostare.webp",
     description: "More Doros?",
     effectDescription: (value, purchased) =>
       `Increases Doros per click by ${value}.\nCurrently increasing click power by ${
         value * purchased
       }.\n(${purchased} × ${value} per level)`,
-    cost: function () {
-      return Math.round(this.baseCost * Math.pow(10, this.purchased));
-    },
-  },
-
-  {
+    costFunction: "simpleExponential",
+  }),
+  new Upgrade({
     id: 3,
-    name: "Lurking Doro Upgrade",
+    name: "Lurking Doro Upgrade I",
     type: "dpsMultiplier",
     baseCost: 500,
     value: 1.15,
-    purchased: 0,
     icon: "./src/assets/dorocreep.webp",
     description: "Upgrade the Lurking Doros to lurk better.",
     effectDescription: (value, purchased) =>
@@ -32,52 +91,91 @@ export const upgrades = [
         value,
         purchased
       ).toFixed(2)}x`,
-    cost: function () {
-      const costLevels = [500, 10000, 3000000, 10000000];
-      return costLevels[Math.min(this.purchased, costLevels.length - 1)];
-    },
-    isVisible: function (gameState) {
-      // Get the Lurking Doro autoclicker
-      const lurkingDoro = gameState.autoclickers.find((a) => a.id === 2);
-      if (!lurkingDoro) return false;
-
-      // Define thresholds for each upgrade level
-      const thresholds = [10, 20, 50, 100];
-
-      // If all upgrades are purchased, don't show
-      if (this.purchased >= thresholds.length) return false;
-
-      // Check if we've reached the threshold for the next purchase
-      const nextThreshold = thresholds[this.purchased];
-      const hasReachedThreshold = lurkingDoro.purchased >= nextThreshold;
-
-      // Only show if we're at the threshold AND either:
-      // 1. We haven't purchased this level yet, OR
-      // 2. We're seeing if we should show the next level
-      return hasReachedThreshold;
-    },
+    visibilityConditions: [
+      { type: "MIN_AUTOCLICKER_LEVEL", autoclickerId: 2, level: 10 },
+    ],
     priority: 1,
-  },
-  {
+    targetAutoclickerId: 2,
+    maxPurchases: 1,
+  }),
+  new Upgrade({
+    id: 14,
+    name: "Lurking Doro Upgrade II",
+    type: "dpsMultiplier",
+    baseCost: 10000,
+    value: 1.15,
+    icon: "./src/assets/dorocreep.webp",
+    description: "Upgrade the Lurking Doros to lurk better.",
+    effectDescription: (value, purchased) =>
+      `Increases the base DPS of Lurking Doros by 15%.\nCurrent multiplier: ${Math.pow(
+        value,
+        purchased + 1
+      ).toFixed(2)}x`,
+    visibilityConditions: [
+      { type: "MIN_AUTOCLICKER_LEVEL", autoclickerId: 2, level: 20 },
+    ],
+    priority: 1,
+    targetAutoclickerId: 2,
+    maxPurchases: 1,
+    prerequisiteUpgradeId: 3,
+  }),
+  new Upgrade({
+    id: 15,
+    name: "Lurking Doro Upgrade III",
+    type: "dpsMultiplier",
+    baseCost: 3000000,
+    value: 1.15,
+    icon: "./src/assets/dorocreep.webp",
+    description: "Upgrade the Lurking Doros to lurk better.",
+    effectDescription: (value, purchased) =>
+      `Increases the base DPS of Lurking Doros by 15%.\nCurrent multiplier: ${Math.pow(
+        value,
+        purchased + 2
+      ).toFixed(2)}x`,
+    visibilityConditions: [
+      { type: "MIN_AUTOCLICKER_LEVEL", autoclickerId: 2, level: 50 },
+      { type: "MAX_UPGRADE_LEVEL", maxLevel: 1 },
+    ],
+    priority: 1,
+    targetAutoclickerId: 2,
+    maxPurchases: 1,
+    prerequisiteUpgradeId: 14,
+  }),
+  new Upgrade({
+    id: 16,
+    name: "Lurking Doro Upgrade IV",
+    type: "dpsMultiplier",
+    baseCost: 10000000,
+    value: 1.15,
+    icon: "./src/assets/dorocreep.webp",
+    description: "Upgrade the Lurking Doros to lurk better.",
+    effectDescription: (value, purchased) =>
+      `Increases the base DPS of Lurking Doros by 15%.\nCurrent multiplier: ${Math.pow(
+        value,
+        purchased + 3
+      ).toFixed(2)}x`,
+    visibilityConditions: [
+      { type: "MIN_AUTOCLICKER_LEVEL", autoclickerId: 2, level: 100 },
+      { type: "MAX_UPGRADE_LEVEL", maxLevel: 1 },
+    ],
+    priority: 1,
+    targetAutoclickerId: 2,
+    maxPurchases: 1,
+    prerequisiteUpgradeId: 15,
+  }),
+  new Upgrade({
     id: 5,
     name: "Motivating Doro",
     type: "globalDpsMultiplier",
     baseCost: 10000,
-    value: 1.1, // 10% boost
-    purchased: 0,
+    value: 1.1,
     icon: "./src/assets/dorowhip.webp",
     description: 'A "motivating" Doro to make all Doros work harder.',
     effectDescription: () => "Adds 10% to the base value of all Doros",
-    cost: function () {
-      return this.baseCost;
-    },
-    // AC1 & AC2: Only show when total DPS > 500
-    isVisible: function (gameState) {
-      // Calculate total DPS by summing (value * purchased) for all autoclickers
-      const totalDPS = gameState.getTotalDPS();
-      return totalDPS >= 500 && this.purchased < 1;
-    },
-    // AC7 & AC7.1: Control rendering order by priority
-    priority: 1, // Higher priority than other hidden upgrades
-  },
+    visibilityConditions: [
+      { type: "MIN_TOTAL_DPS", threshold: 500 },
+      { type: "MAX_UPGRADE_LEVEL", maxLevel: 1 },
+    ],
+    priority: 1,
+  }),
 ];

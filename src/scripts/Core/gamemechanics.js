@@ -1,62 +1,47 @@
+// gamemechanics.js - Corrected and improved version
 export class GameMechanics {
   constructor(game) {
     this.game = game;
     this.clickMultiplier = 1;
-    // Remove excessive locks - we only need one for purchase processing
     this._processingPurchase = false;
   }
 
   handleClick() {
-    // Simplified click handling without lock
     this.game.state.manualClicks += 1;
     this.game.state.increment(this.clickMultiplier);
-    this.game.ui.updateScoreDisplay();
+    // The state's `notify` method will now handle triggering UI updates
+    this.game.state.notify();
   }
 
   purchaseUpgrade(upgradeId) {
-    // Skip if already processing (but don't block indefinitely)
     if (this._processingPurchase) return false;
-
-    const upgrade =
-      this.game.autoclickers.find((u) => u?.id === upgradeId) ||
-      this.game.upgrades.find((u) => u?.id === upgradeId);
-
-    if (!upgrade) {
-      console.warn(`Upgrade ${upgradeId} not found`);
-      return false;
-    }
-
-    // Fast affordability check before locking
-    if (!this.canAfford(upgrade)) {
-      return false;
-    }
-
     this._processingPurchase = true;
 
     try {
-      const cost =
-        typeof upgrade.cost === "function" ? upgrade.cost() : upgrade.cost;
+      const item =
+        this.game.autoclickers.find((u) => u.id === upgradeId) ||
+        this.game.upgrades.find((u) => u.id === upgradeId);
+      if (!item) return false;
 
-      // Process purchase
+      const cost = item.cost;
+      if (this.game.state.doros < cost) return false;
+
       this.game.state.doros -= cost;
-      upgrade.purchased += 1;
-      this.applyUpgrade(upgrade);
+      item.purchased += 1;
+      this.applyUpgrade(item);
 
-      // Optimized UI updates:
-      if (upgrade.type === "autoclicker") {
-        // For autoclickers, just update the button directly
-        requestAnimationFrame(() => {
-          this.game.ui.refreshUpgradeButton(upgradeId);
-          this.game.ui.updateScoreDisplay();
-        });
-      } else {
-        // For other upgrades, mark for full refresh
-        this.game.ui._needsUpgradeRender = true;
-      }
+      console.log(`[PURCHASE] ${item.name}`, {
+        beforePurchase: cost,
+        afterPurchase: item.cost,
+        purchased: item.purchased,
+      });
 
-      // Batch state notifications
+      // Instead of direct UI calls, notify the UIManager that state has changed.
+      // This also triggers the affordability check for all other buttons.
+      this.game.state.notify();
+
       requestAnimationFrame(() => {
-        this.game.state.notify();
+        this.game.ui.refreshUpgradeButton(item.id);
       });
 
       return true;
@@ -65,29 +50,81 @@ export class GameMechanics {
     }
   }
 
+  recalculateClickMultiplier() {
+    let totalMultiplier = 1;
+    const clickUpgrades = this.game.upgrades.filter(
+      (u) => u.type === "clickMultiplier" && u.purchased > 0
+    );
+    for (const upgrade of clickUpgrades) {
+      totalMultiplier += upgrade.value * upgrade.purchased;
+    }
+    this.clickMultiplier = totalMultiplier;
+  }
+
   applyUpgrade(upgrade) {
-    // Simplified upgrade application
     switch (upgrade.type) {
-      case "multiplier":
-        this.clickMultiplier += upgrade.value;
+      case "clickMultiplier":
+        this.recalculateClickMultiplier();
         break;
+
+      // CHANGED: Correctly apply global DPS multiplier
+      case "globalDpsMultiplier":
+        this.recalculateGlobalDpsMultiplier();
+        this.game.autoclickerSystem.recalculateDPS();
+        break;
+
       case "autoclicker":
-        this.game.autoclickerSystem._lastDPS = 0; // Force recalc
+        this.game.autoclickerSystem.recalculateDPS();
         break;
+
+      // CHANGED: Make dpsMultiplier generic
       case "dpsMultiplier":
-        const lurkingDoro = this.game.autoclickers.find((a) => a.id === 2);
-        if (lurkingDoro) {
-          lurkingDoro.value =
-            lurkingDoro.baseDPS * Math.pow(upgrade.value, upgrade.purchased);
+        if (upgrade.targetAutoclickerId !== null) {
+          this.recalculateDpsForAutoclicker(upgrade.targetAutoclickerId);
         }
         break;
     }
   }
 
-  canAfford(upgrade) {
-    // Simplified affordability check
-    const cost =
-      typeof upgrade.cost === "function" ? upgrade.cost() : upgrade.cost;
+  // NEW METHOD: Recalculates DPS for a specific autoclicker based on its upgrades
+  recalculateDpsForAutoclicker(autoclickerId) {
+    const autoclicker = this.game.autoclickers.find(
+      (a) => a.id === autoclickerId
+    );
+    if (!autoclicker) return;
+
+    const dpsUpgrades = this.game.upgrades.filter(
+      (u) =>
+        u.type === "dpsMultiplier" &&
+        u.targetAutoclickerId === autoclickerId &&
+        u.purchased > 0
+    );
+
+    let multiplier = 1;
+    for (const upgrade of dpsUpgrades) {
+      multiplier *= Math.pow(upgrade.value, upgrade.purchased);
+    }
+
+    autoclicker.value = autoclicker.baseDPS * multiplier;
+    this.game.autoclickerSystem.recalculateDPS();
+  }
+
+  // NEW METHOD: Recalculates the total global DPS multiplier
+  recalculateGlobalDpsMultiplier() {
+    let totalMultiplier = 1;
+    const globalUpgrades = this.game.upgrades.filter(
+      (u) => u.type === "globalDpsMultiplier" && u.purchased > 0
+    );
+
+    for (const upgrade of globalUpgrades) {
+      totalMultiplier *= Math.pow(upgrade.value, upgrade.purchased);
+    }
+
+    this.game.state.globalDpsMultiplier = totalMultiplier;
+  }
+
+  canAfford(item) {
+    const cost = item.cost;
     return this.game.state.doros >= cost;
   }
 
