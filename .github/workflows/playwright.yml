@@ -1,36 +1,24 @@
-name: Playwright Tests
+name: Playwright CI Pipeline
 
 on:
-  # This section enables manual runs from the Actions tab.
+  # Trigger 1: Runs automatically on any push to the 'main' branch.
+  push:
+    branches: [main]
+
+  # Trigger 2: Runs automatically on any pull request that targets the 'main' branch.
+  pull_request:
+    branches: [main]
+
+  # Trigger 3: Allows you to manually run the workflow on the 'main' branch at any time.
   workflow_dispatch:
-    inputs:
-      # The branch input is now correctly used in the checkout step below.
-      branch:
-        description: "Branch to test against"
-        required: true
-        default: "main"
-        type: choice
-        options:
-          - main
-          - master
-      # FIXED: Renamed 'environment' to 'target_environment' to avoid keyword conflict.
-      target_environment:
-        description: "Environment to test"
-        required: false
-        default: "production"
 
 jobs:
   test:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      # FIXED: This step now uses the 'branch' input you select in the UI.
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.branch }}
-
-      # This step is a good check to ensure the deployment is live before testing.
       - name: Verify Exact Page URL is accessible
         run: |
           TEST_URL="https://kuroiel.github.io/Doro-clicker/"
@@ -62,9 +50,6 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test --workers=1 --project=chromium
         env:
-          # Note: The 'target_environment' input is not used here, but you could
-          # add logic to change the BASE_URL based on its value if you had
-          # different environments (e.g., staging, production).
           E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
           PLAYWRIGHT_TEST_TIMEOUT: 30000
 
