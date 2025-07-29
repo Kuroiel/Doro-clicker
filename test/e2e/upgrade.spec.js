@@ -4,13 +4,9 @@ import { waitForGameInitialization, resetGameState } from "./test-utils";
 test.describe("Upgrade System", () => {
   test.beforeEach(async ({ page, baseURL }) => {
     await page.goto(baseURL);
-
     await waitForGameInitialization(page);
-
-    // Reset to default test state (1000 doros)
     await resetGameState(page);
 
-    // Handle view switching if needed
     const upgradesButton = page.locator('[data-view="upgrades"]');
     await upgradesButton.click();
     await expect(page.locator("#upgrades-container.active-view")).toBeVisible();
@@ -18,22 +14,22 @@ test.describe("Upgrade System", () => {
 
   test("should purchase click multiplier upgrade", async ({ page }) => {
     const upgradeButton = page.locator('[data-id="1"]');
-
-    // Wait for button to be in initial state
     await expect(upgradeButton).toBeVisible();
     await expect(upgradeButton).toContainText("Cost: 10 Doros");
 
-    // Purchase the upgrade
     await upgradeButton.click();
-    await page.evaluate(() => window.doroGame.ui.refreshUpgradeButton(1));
 
-    // Verify the click multiplier was updated
+    // REMOVED: Do not call internal UI methods from tests.
+    // The game is responsible for its own updates.
+
+    // Verify the game state was updated correctly.
     const clickMultiplier = await page.evaluate(
       () => window.doroGame.mechanics.clickMultiplier
     );
-    expect(clickMultiplier).toBe(1);
+    // FIXED: Base multiplier is 1, the upgrade adds 1. Total is 2.
+    expect(clickMultiplier).toBe(2);
 
-    // Wait for UI to update with new cost - use regex to match text within the HTML structure
+    // Verify the UI updated to show the new cost.
     await expect(upgradeButton).toContainText(/Cost: 100 Doros/);
   });
 
@@ -41,25 +37,27 @@ test.describe("Upgrade System", () => {
     const motivatingDoro = page.locator('[data-id="5"]');
     await expect(motivatingDoro).toBeHidden();
 
-    // Set up valid DPS state and force view update
+    // Set up game state that meets the visibility condition.
     await page.evaluate(() => {
       const game = window.doroGame;
       const walkin = game.autoclickers.find((a) => a.id === 4);
-      walkin.purchased = 34;
-      game.viewManager.switchView("upgrades");
-      game.ui.forceFullUpdate(); // Explicit update when needed
+      walkin.purchased = 34; // This gives > 500 DPS
+      // Use the new robust UI update method.
+      game.ui.forceFullUpdate();
     });
 
     await expect(motivatingDoro).toBeVisible({ timeout: 5000 });
   });
 
   test("should prevent unaffordable purchases", async ({ page }) => {
+    // Set the game state to have very few doros.
     await page.evaluate(() => {
       window.doroGame.state.doros = 5;
-      window.doroGame.ui.updateUI(); // Changed from window.doroGame.updateUI
+      // FIXED: Call state.notify() to trigger the UI update cycle.
+      window.doroGame.state.notify();
     });
 
-    // Wait for UI to reflect the state change
+    // Wait for the UI to reflect the change.
     await expect(page.getByText("Doros: 5")).toBeVisible();
 
     const upgradeButton = page.locator('[data-id="1"]');

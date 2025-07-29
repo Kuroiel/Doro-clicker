@@ -25,59 +25,33 @@ export async function waitForGameInitialization(
   await page.waitForFunction(() => window.doroGame?.state, { timeout: 3000 });
 }
 
-export async function resetGameState(
-  page,
-  { initialDoros = 1000, resetUpgrades = true, resetAutoclickers = true } = {}
-) {
-  // Verify we're starting from initialized state
-  const currentURL = await page.url();
-  if (!currentURL.includes(getTestPath())) {
-    await page.goto(getTestPath());
+// REFACTORED: This function is now much more robust.
+export async function resetGameState(page, { initialDoros = 1000 } = {}) {
+  await page.evaluate(() => {
+    // Use the game's own robust reset function as the source of truth.
+    // This correctly resets all state, multipliers, and autoclicker values.
+    if (window.doroGame?.saveSystem) {
+      window.doroGame.saveSystem.resetGame();
+    }
+  });
+
+  // After resetting to a clean slate, set the specific doros count for the test.
+  if (initialDoros !== 0) {
+    await page.evaluate((doros) => {
+      const game = window.doroGame;
+      game.state.doros = doros;
+      game.state.totalDoros = doros;
+      // Manually notify the UI that the state has changed.
+      game.state.notify();
+    }, initialDoros);
   }
 
-  // Execute reset with immediate verification
-  await page.evaluate(
-    ({ initialDoros, resetUpgrades, resetAutoclickers }) => {
-      const game = window.doroGame;
-
-      // Set initial doros through the state object
-      game.state.doros = initialDoros;
-      game.state.totalDoros = initialDoros;
-
-      // Reset upgrades if requested
-      if (resetUpgrades && game.upgrades) {
-        game.upgrades.forEach((u) => {
-          u.purchased = 0;
-          // Re-apply upgrade effects if needed
-          game.mechanics.applyUpgrade(u);
-        });
-      }
-
-      // Reset autoclickers if requested
-      if (resetAutoclickers && game.autoclickers) {
-        game.autoclickers.forEach((a) => {
-          a.purchased = 0;
-          // Reset to base value
-          if (a.baseDPS) {
-            a.value = a.baseDPS;
-          }
-        });
-      }
-
-      // Reset click multiplier
-      game.mechanics.clickMultiplier = 1;
-
-      // Force UI update
-      game.ui.updateUI();
-    },
-    { initialDoros, resetUpgrades, resetAutoclickers }
-  );
-
-  // Verify the state was set correctly
+  // Verify the state was set correctly and the UI has updated.
   await expect(async () => {
     const displayedText = await page.locator("#score-display").textContent();
-    const displayedNumber = displayedText.replace(/[^0-9]/g, "");
-    expect(parseInt(displayedNumber)).toBe(initialDoros);
+    // Use regex to handle formatted numbers like "1,000"
+    const displayedNumber = parseInt(displayedText.replace(/[^0-9]/g, ""));
+    expect(displayedNumber).toBe(initialDoros);
   }).toPass({ timeout: 2000 });
 }
 
@@ -88,7 +62,7 @@ export async function disableSaveSystem(page) {
       if (window.doroGame.saveSystem.saveInterval) {
         clearInterval(window.doroGame.saveSystem.saveInterval);
       }
-      // Prevent any saves during tests
+      // Prevent any saves or loads during tests
       window.doroGame.saveSystem.saveGame = () => {};
       window.doroGame.saveSystem.loadGame = () => {};
     }
