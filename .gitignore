@@ -4,3 +4,4 @@ playwright-report
 coverage
 node_modules
 /blob-report/
+test-results.txt

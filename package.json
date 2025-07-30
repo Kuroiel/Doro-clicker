@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "scripts": {
     "test:unit": "jest unit",
+    "test:unit:report": "jest unit > test-results.txt 2>&1",
     "test:unit:watch": "jest --watchAll",
     "test:unit:coverage": "jest unit --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
