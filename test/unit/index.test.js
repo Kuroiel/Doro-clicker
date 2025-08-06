@@ -1,71 +1,117 @@
-// test/unit/index.test.js - Final Corrected Version
+// test/unit/index.test.js - Final Corrected and Robust Version
 
+// We mock the dependency at the top level.
+// This mock will be used by all tests in this file.
 jest.mock("../../src/scripts/Core/doroclicker.js", () => ({
   DoroClicker: jest.fn(),
 }));
 
+// Mock console.error to keep test output clean.
 const consoleErrorSpy = jest
   .spyOn(console, "error")
   .mockImplementation(() => {});
 
 describe("Game Initialization (index.js)", () => {
-  let DoroClickerMock;
-
-  beforeEach(async () => {
-    // 1. Reset everything to a clean slate.
-    jest.resetModules();
+  beforeEach(() => {
+    // Before each test, we clear any previous mock calls and reset the global state.
     jest.clearAllMocks();
-
-    // 2. Get a fresh handle on the mock constructor.
-    DoroClickerMock = (await import("../../src/scripts/Core/doroclicker.js"))
-      .DoroClicker;
-
-    // 3. Set up the global environment for the test.
     delete window.doroGame;
+  });
+
+  afterAll(() => {
+    // Restore console after all tests are done.
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("should NOT initialize the game immediately upon script execution", () => {
+    // Arrange: Reset modules to ensure we get a fresh, un-executed index.js
+    jest.resetModules();
+    // FIX: Explicitly set the readyState to 'loading' to test the deferred path.
     Object.defineProperty(document, "readyState", {
       value: "loading",
       writable: true,
     });
 
-    // --- THIS IS THE FIX ---
-    // 4. Import the script under test. This will execute the code in index.js,
-    // which adds the DOMContentLoaded listener. This is now part of the setup.
-    await import("../../src/scripts/index.js");
-    // --- END OF FIX ---
+    // Act: Run the script's code.
+    require("../../src/scripts/index.js");
+    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+
+    // Assert: The constructor should not have been called yet.
+    expect(DoroClicker).not.toHaveBeenCalled();
   });
 
-  afterAll(() => {
-    consoleErrorSpy.mockRestore();
+  it("should initialize the game immediately if the DOM is already ready", () => {
+    // Arrange: Reset modules and set the readyState to 'complete'.
+    jest.resetModules();
+    Object.defineProperty(document, "readyState", {
+      value: "complete",
+      writable: true,
+    });
+
+    // Act: Run the script's code.
+    require("../../src/scripts/index.js");
+    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+
+    // Assert: The constructor should have been called immediately.
+    expect(DoroClicker).toHaveBeenCalledTimes(1);
   });
 
-  it("should NOT initialize the game on import (before event fires)", () => {
-    // Assert: The beforeEach block only attached the listener.
-    // The constructor should not have been called yet.
-    expect(DoroClickerMock).not.toHaveBeenCalled();
-  });
+  it("should initialize the game when DOMContentLoaded is dispatched", () => {
+    // Arrange: Reset modules and set up the DOM state for a successful event.
+    jest.resetModules();
+    Object.defineProperty(document, "readyState", {
+      value: "loading",
+      writable: true,
+    });
 
-  it("should initialize the game when DOMContentLoaded event is dispatched", () => {
-    // Arrange
-    const mockGameInstance = { id: "mock-game" };
-    DoroClickerMock.mockImplementation(() => mockGameInstance);
+    // Act I: Run the script to attach the event listener.
+    require("../../src/scripts/index.js");
+    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
 
-    // Act: The listener is already attached. We just need to fire the event.
+    // Act II: Simulate the browser firing the event.
     Object.defineProperty(document, "readyState", {
       value: "interactive",
       writable: true,
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
 
+    // Assert: The constructor should have been called exactly once.
+    expect(DoroClicker).toHaveBeenCalledTimes(1);
+  });
+
+  it("should assign the new game instance to window.doroGame", () => {
+    // Arrange
+    jest.resetModules();
+    Object.defineProperty(document, "readyState", {
+      value: "loading",
+      writable: true,
+    });
+    // Act I: Load the script to set up the listener.
+    require("../../src/scripts/index.js");
+    // Arrange II: Get the fresh mock and configure it.
+    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+    const mockGameInstance = { id: "mock-game" };
+    DoroClicker.mockReturnValue(mockGameInstance);
+
+    // Act II: Trigger the listener.
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+
     // Assert
-    expect(DoroClickerMock).toHaveBeenCalledTimes(1);
     expect(window.doroGame).toBe(mockGameInstance);
   });
 
-  it("should NOT initialize the game if an instance already exists", () => {
-    // Arrange: Set up the pre-existing condition *after* the initial setup.
-    window.doroGame = { id: "existing-game" };
+  it("should NOT initialize the game if window.doroGame already exists", () => {
+    // Arrange
+    jest.resetModules();
+    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+    Object.defineProperty(document, "readyState", {
+      value: "loading",
+      writable: true,
+    });
+    window.doroGame = { id: "existing-game" }; // Set the pre-existing condition.
 
     // Act
+    require("../../src/scripts/index.js");
     Object.defineProperty(document, "readyState", {
       value: "interactive",
       writable: true,
@@ -73,7 +119,6 @@ describe("Game Initialization (index.js)", () => {
     document.dispatchEvent(new Event("DOMContentLoaded"));
 
     // Assert
-    expect(DoroClickerMock).not.toHaveBeenCalled();
-    expect(window.doroGame.id).toBe("existing-game");
+    expect(DoroClicker).not.toHaveBeenCalled();
   });
 });

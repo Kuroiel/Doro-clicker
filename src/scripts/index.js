@@ -1,12 +1,9 @@
-// index.js - Final Corrected Version
 import { DoroClicker } from "./Core/doroclicker.js";
 
-// This listener ensures that the HTML document is fully loaded and parsed
-// before we try to initialize the game or interact with any of its elements.
-document.addEventListener("DOMContentLoaded", function initializeGame() {
+function initializeGame() {
   // Only initialize the game if an instance does not already exist.
   // This prevents re-initialization in some hot-reloading environments.
-  if (typeof window.doroGame === "undefined") {
+  if (!window.doroGame) {
     try {
       // Create and assign the game instance to the window for global access/debugging.
       window.doroGame = new DoroClicker();
@@ -17,13 +14,20 @@ document.addEventListener("DOMContentLoaded", function initializeGame() {
       }
     } catch (error) {
       console.error("Game initialization failed:", error);
-      // Provide a dummy object if initialization fails in a test environment.
+      // Provide a dummy object if initialization fails in a test environment
       if (typeof window.__TESTING__ !== "undefined") {
         window.doroGame = { error: true };
       }
     }
   }
+}
 
-  // The event listener has done its job and can be removed to prevent memory leaks.
-  document.removeEventListener("DOMContentLoaded", initializeGame);
-});
+// This is the standard, robust way to handle DOM readiness.
+if (document.readyState === "loading") {
+  // We are still loading, so wait for the event.
+  document.addEventListener("DOMContentLoaded", initializeGame);
+} else {
+  // The DOM is already ready, so we can initialize immediately.
+  // This handles cases where the script is loaded with 'defer' or 'async'.
+  initializeGame();
+}
