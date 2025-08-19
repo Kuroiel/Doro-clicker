@@ -1,4 +1,3 @@
-// systems/utils.js
 export const CostCalculations = {
   // Standard exponential cost growth with decade jumps
   standardCost: (

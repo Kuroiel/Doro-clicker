@@ -1,9 +1,6 @@
-// test/unit/eventhandlers.test.js - Complete Corrected Version
-
 import { EventHandlers } from "../../src/scripts/Events/eventhandlers.js";
 import { DOMHelper } from "../../src/scripts/UI/dom.js";
 
-// --- FIX: Update the mockGame object to match the current GameMechanics class ---
 const mockGame = {
   mechanics: {
     handleClick: jest.fn(),
@@ -49,7 +46,6 @@ describe("EventHandlers", () => {
 
   describe("setupAllEventListeners", () => {
     it("should call all individual setup methods", () => {
-      // Spy on the methods of the instance to verify they are called
       jest.spyOn(eventHandlers, "setupDoroImageListeners");
       jest.spyOn(eventHandlers, "setupUpgradeButtonListeners");
       jest.spyOn(eventHandlers, "setupViewButtonListeners");
@@ -124,7 +120,6 @@ describe("EventHandlers", () => {
     it("should handle click on an enabled upgrade button", () => {
       eventHandlers.setupUpgradeButtonListeners();
       upgradeButton.click();
-      // --- FIX: Test for the correct function call ---
       expect(mockGame.mechanics.purchaseUpgrade).toHaveBeenCalledWith(1);
     });
 
@@ -167,7 +162,6 @@ describe("EventHandlers", () => {
       jest.spyOn(DOMHelper, "getShowStatsButton").mockReturnValue(showButton);
       jest.spyOn(DOMHelper, "getCloseStatsButton").mockReturnValue(closeButton);
 
-      // --- FIX: Setup the listeners fresh before each test in this block ---
       eventHandlers.setupStatsEvents();
     });
 
@@ -177,11 +171,9 @@ describe("EventHandlers", () => {
     });
 
     it("should hide stats when close button is clicked", () => {
-      // First, show the stats to ensure it's visible
       showButton.click();
       expect(statsElement.style.display).toBe("block");
 
-      // Then, click the close button
       closeButton.click();
       expect(statsElement.style.display).toBe("none");
     });
@@ -190,7 +182,6 @@ describe("EventHandlers", () => {
       showButton.click();
       expect(statsElement.style.display).toBe("block");
 
-      // Simulate a click on the body, which is outside the overlay
       document.body.click();
       expect(statsElement.style.display).toBe("none");
     });
@@ -199,7 +190,6 @@ describe("EventHandlers", () => {
       showButton.click();
       expect(statsElement.style.display).toBe("block");
 
-      // Simulate a click on the stats overlay itself
       statsElement.click();
       expect(statsElement.style.display).toBe("block");
     });

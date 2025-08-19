@@ -1,8 +1,5 @@
-// root/test/unit/doroclicker.test.js - Corrected Mocks and Logic
-
 import { DoroClicker } from "../../src/scripts/Core/doroclicker.js";
 
-// Mock all dependencies with new, correct structures
 jest.mock("../../src/scripts/Core/gameState.js", () => ({
   GameState: jest.fn(() => ({ setAutoclickers: jest.fn() })),
 }));
@@ -69,14 +66,12 @@ describe("DoroClicker", () => {
     });
 
     it("should call the init method", () => {
-      // This is tricky to test directly, so we test the effects of init() below
       expect(doroClicker.autoclickerSystem.setup).toHaveBeenCalled();
     });
   });
 
   describe("init()", () => {
     it("should call setup on required systems", () => {
-      // The constructor calls init(), so these should be called upon instantiation
       expect(doroClicker.autoclickerSystem.setup).toHaveBeenCalledTimes(1);
       expect(doroClicker.events.setupAllEventListeners).toHaveBeenCalledTimes(
         1

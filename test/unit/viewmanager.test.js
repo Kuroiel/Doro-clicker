@@ -1,5 +1,3 @@
-// root/test/unit/viewmanager.test.js - Corrected for new UI methods
-
 jest.mock("../../src/scripts/UI/dom.js", () => ({
   DOMHelper: {
     getViewButtons: jest.fn(),

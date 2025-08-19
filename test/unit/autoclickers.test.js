@@ -1,13 +1,11 @@
-// root/test/unit/autoclickers.test.js - Corrected for getters
-
 import { autoclickers } from "../../src/scripts/Systems/autoclickers.js";
 import { CostCalculations } from "../../src/scripts/Systems/utils.js";
 
 describe("Autoclickers Data Module", () => {
   const testClickers = [
-    autoclickers.find((c) => c.id === 2), // Lurking Doro (BASIC)
-    autoclickers.find((c) => c.id === 4), // Walkin Doro (MID_TIER)
-    autoclickers.find((c) => c.id === 6), // Napping Siren Doro (HIGH_TIER)
+    autoclickers.find((c) => c.id === 2),
+    autoclickers.find((c) => c.id === 4),
+    autoclickers.find((c) => c.id === 6),
   ];
 
   describe("Autoclicker Structure", () => {
@@ -25,7 +23,7 @@ describe("Autoclickers Data Module", () => {
             description: expect.any(String),
           })
         );
-        // Test getters separately
+
         expect(typeof clicker.effectDescription).toBe("string");
         expect(typeof clicker.cost).toBe("number");
       });
@@ -36,7 +34,7 @@ describe("Autoclickers Data Module", () => {
     it("should generate a correct description string", () => {
       const clicker = autoclickers.find((c) => c.id === 2);
       clicker.purchased = 5;
-      // Access as a getter property
+
       const desc = clicker.effectDescription;
       expect(desc).toContain(`Provides ${clicker.value} Doros per second.`);
       expect(desc).toContain(

@@ -25,11 +25,8 @@ export async function waitForGameInitialization(
   await page.waitForFunction(() => window.doroGame?.state, { timeout: 3000 });
 }
 
-// REFACTORED: This function is now much more robust.
 export async function resetGameState(page, { initialDoros = 1000 } = {}) {
   await page.evaluate(() => {
-    // Use the game's own robust reset function as the source of truth.
-    // This correctly resets all state, multipliers, and autoclicker values.
     if (window.doroGame?.saveSystem) {
       window.doroGame.saveSystem.resetGame();
     }
@@ -49,7 +46,6 @@ export async function resetGameState(page, { initialDoros = 1000 } = {}) {
   // Verify the state was set correctly and the UI has updated.
   await expect(async () => {
     const displayedText = await page.locator("#score-display").textContent();
-    // Use regex to handle formatted numbers like "1,000"
     const displayedNumber = parseInt(displayedText.replace(/[^0-9]/g, ""));
     expect(displayedNumber).toBe(initialDoros);
   }).toPass({ timeout: 2000 });

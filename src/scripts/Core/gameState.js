@@ -71,7 +71,6 @@ export class GameState {
     return total * this.globalDpsMultiplier;
   }
 
-  // AC6: Add method to apply global DPS multiplier
   applyGlobalDpsMultiplier(multiplier) {
     this.globalDpsMultiplier *= multiplier;
   }

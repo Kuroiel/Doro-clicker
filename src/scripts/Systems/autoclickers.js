@@ -1,4 +1,3 @@
-// systems/autoclickers.js
 import { CostCalculations } from "./utils.js";
 
 const AUTOCLICKER_TEMPLATES = {

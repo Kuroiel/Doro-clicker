@@ -19,14 +19,11 @@ test.describe("Upgrade System", () => {
 
     await upgradeButton.click();
 
-    // REMOVED: Do not call internal UI methods from tests.
-    // The game is responsible for its own updates.
-
     // Verify the game state was updated correctly.
     const clickMultiplier = await page.evaluate(
       () => window.doroGame.mechanics.clickMultiplier
     );
-    // FIXED: Base multiplier is 1, the upgrade adds 1. Total is 2.
+
     expect(clickMultiplier).toBe(2);
 
     // Verify the UI updated to show the new cost.
@@ -42,7 +39,6 @@ test.describe("Upgrade System", () => {
       const game = window.doroGame;
       const walkin = game.autoclickers.find((a) => a.id === 4);
       walkin.purchased = 34; // This gives > 500 DPS
-      // Use the new robust UI update method.
       game.ui.forceFullUpdate();
     });
 
@@ -53,7 +49,6 @@ test.describe("Upgrade System", () => {
     // Set the game state to have very few doros.
     await page.evaluate(() => {
       window.doroGame.state.doros = 5;
-      // FIXED: Call state.notify() to trigger the UI update cycle.
       window.doroGame.state.notify();
     });
 

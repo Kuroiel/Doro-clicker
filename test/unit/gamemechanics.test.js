@@ -1,5 +1,3 @@
-// root/test/unit/GameMechanics.test.js - Corrected for new logic
-
 import { GameMechanics } from "../../src/scripts/Core/gamemechanics.js";
 
 describe("GameMechanics", () => {
@@ -145,7 +143,7 @@ describe("GameMechanics", () => {
 
     it("recalculateDpsForAutoclicker should apply multipliers correctly", () => {
       const dpsUpgrade = mockGame.upgrades.find((u) => u.id === 3);
-      dpsUpgrade.purchased = 2; // e.g., 1.15^2
+      dpsUpgrade.purchased = 2;
       mechanics.recalculateDpsForAutoclicker(2);
       const autoclicker = mockGame.autoclickers.find((a) => a.id === 2);
       expect(autoclicker.value).toBeCloseTo(1 * Math.pow(1.15, 2));

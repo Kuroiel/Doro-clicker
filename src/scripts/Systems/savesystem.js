@@ -27,8 +27,6 @@ export class SaveSystem {
           id: u.id,
           purchased: u.purchased,
         })),
-        // REMOVED: Do not save derived stats like clickMultiplier.
-        // It will be recalculated on load.
       };
       localStorage.setItem("doroClickerSave", JSON.stringify(saveData));
     } catch (error) {
@@ -66,9 +64,6 @@ export class SaveSystem {
         }
       });
 
-      // --- NEW: RECALCULATION STEP ---
-      // After loading all purchase counts, recalculate all derived stats.
-      // This is the source of truth and prevents bugs from stale save data.
       this.game.mechanics.recalculateClickMultiplier();
       this.game.mechanics.recalculateGlobalDpsMultiplier();
 
@@ -84,8 +79,6 @@ export class SaveSystem {
 
       this.game.autoclickerSystem.recalculateDPS(); // Trigger a final DPS update
 
-      // --- NEW: UI UPDATE STEP ---
-      // Force a full UI re-render to reflect the loaded state accurately.
       this.game.ui.forceFullUpdate();
     } catch (error) {
       console.error("Failed to load game:", error);
@@ -98,7 +91,6 @@ export class SaveSystem {
     // Reset all state and purchase counts
     localStorage.removeItem("doroClickerSave");
 
-    // 2. Reset all state and purchase counts.
     this.game.state.reset();
     this.game.autoclickers.forEach((clicker) => {
       clicker.purchased = 0;
@@ -106,15 +98,12 @@ export class SaveSystem {
     });
     this.game.upgrades.forEach((upgrade) => (upgrade.purchased = 0));
 
-    // 3. Recalculate all stats from the fresh state.
     this.game.mechanics.recalculateClickMultiplier();
     this.game.mechanics.recalculateGlobalDpsMultiplier();
     this.game.autoclickerSystem.recalculateDPS();
 
-    // 4. Force a full UI re-render.
     this.game.ui.forceFullUpdate();
 
-    // 5. Save the new, clean state.
     this.saveGame();
   }
 

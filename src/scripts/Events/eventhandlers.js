@@ -17,7 +17,6 @@ export class EventHandlers {
     const doroImage = DOMHelper.getDoroImage();
     if (!doroImage) return;
 
-    // Remove existing click listener
     if (this._doroClickHandler) {
       doroImage.removeEventListener("click", this._doroClickHandler);
     }
@@ -50,7 +49,6 @@ export class EventHandlers {
         const upgradeId = parseInt(button.dataset.id);
         if (!isNaN(upgradeId)) {
           button.classList.add("processing");
-          // Replace debouncePurchase with direct purchaseUpgrade call
           const purchased = this.game.mechanics.purchaseUpgrade(upgradeId);
           if (purchased) {
             // Visual feedback for successful purchase

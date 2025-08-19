@@ -25,10 +25,7 @@ export class UpgradeRenderer {
    * @returns {string} HTML string for the second line
    */
   static renderSecondLine(upgrade, formatter) {
-    // --- START OF FIX ---
-    // The 'cost' property is a getter, not a function. Access it directly.
     const cost = upgrade.cost;
-    // --- END OF FIX ---
 
     const formattedCost = formatter ? formatter(cost) : cost.toString();
     const showPurchased = upgrade.type === "autoclicker";
@@ -96,8 +93,6 @@ export class UpgradeRenderer {
    * @returns {string} HTML string for the complete button
    */
   static renderUpgradeButton(upgrade, canAfford, formatter) {
-    // This function receives 'canAfford' as an argument, so we trust it.
-    // The logic inside renderSecondLine will handle displaying the correct cost.
     return `
         <button 
             class="upgrade-button ${canAfford ? "affordable" : ""}"

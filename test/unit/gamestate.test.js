@@ -1,5 +1,3 @@
-// root/test/unit/gameState.test.js
-
 import { GameState } from "../../src/scripts/Core/gameState.js";
 
 describe("GameState", () => {
@@ -100,7 +98,7 @@ describe("GameState", () => {
     });
 
     it("should handle floating point precision correctly", () => {
-      gameState.addAutoDoros(0.1 + 0.2); // Famous floating point imprecision case
+      gameState.addAutoDoros(0.1 + 0.2);
       expect(gameState.doros).toBeCloseTo(0.3);
       expect(gameState.totalAutoDoros).toBeCloseTo(0.3);
     });
@@ -192,10 +190,10 @@ describe("GameState", () => {
       gameState.setAutoclickers(mockAutoclickers);
 
       gameState.applyGlobalDpsMultiplier(2);
-      expect(gameState.getTotalDPS()).toBe(4); // (1*1 + 1*1) * 2
+      expect(gameState.getTotalDPS()).toBe(4);
 
       gameState.applyGlobalDpsMultiplier(0.5);
-      expect(gameState.getTotalDPS()).toBe(2); // (1*1 + 1*1) * 1 (since 2*0.5=1)
+      expect(gameState.getTotalDPS()).toBe(2);
     });
 
     it("should return 0 DPS with no autoclickers", () => {
@@ -307,7 +305,7 @@ describe("GameState", () => {
     it("should treat very small decimal numbers as 0", () => {
       const tinyNumber = 0.0000001;
       gameState.addAutoDoros(tinyNumber);
-      expect(gameState.doros).toBe(0); // Expect 0 instead of tinyNumber
+      expect(gameState.doros).toBe(0);
       expect(gameState.totalAutoDoros).toBe(0);
     });
 
@@ -316,7 +314,7 @@ describe("GameState", () => {
       expect(gameState.doros).toBe(0.01); // Rounds up
 
       gameState.addAutoDoros(0.004); // Below threshold
-      expect(gameState.doros).toBe(0.01); // Stays at previous value (0.004 → 0)
+      expect(gameState.doros).toBe(0.01);
     });
   });
 

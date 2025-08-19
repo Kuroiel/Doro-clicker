@@ -10,7 +10,6 @@ test.describe("Autoclicker System", () => {
     await resetGameState(page);
   });
 
-  // --- Group for Basic Purchase and Generation Tests ---
   test.describe("Core Functionality", () => {
     test("should generate doros from autoclickers", async ({ page }) => {
       await expect(page.locator("#score-display")).toContainText(
@@ -55,35 +54,29 @@ test.describe("Autoclicker System", () => {
       const postPurchaseDoros = await page.evaluate(
         () => window.doroGame.state.doros
       );
-      // Use toBeCloseTo to account for tiny amounts of passive generation between clicks.
       expect(postPurchaseDoros).toBeCloseTo(1000 - 10 - 120, 0);
 
       await page.locator("#show-stats").click();
 
-      // Use toPass wrapper to wait for the throttled UI update
       await expect(async () => {
         await expect(page.locator("#stat-dps")).toContainText("16.0"); // 1 DPS from Lurking Doro + 15 DPS from Walkin Doro
       }).toPass();
     });
   });
 
-  // --- NEW: Group for UI State and User Feedback Tests ---
   test.describe("UI State and Feedback", () => {
     test("should disable button when unaffordable and enable when affordable", async ({
       page,
     }) => {
-      // 1. Start with too few Doros to afford the autoclicker.
       await resetGameState(page, { initialDoros: 5 });
       const lurkingDoroButton = page.locator('[data-id="2"]'); // Costs 10
       await expect(lurkingDoroButton).toBeDisabled();
 
-      // 2. Give the player enough Doros to afford it.
       await page.evaluate(() => {
         window.doroGame.state.doros = 15;
         window.doroGame.state.notify(); // Manually trigger UI update
       });
 
-      // 3. Verify the button becomes enabled. Use toPass for robustness as UI update is not instant.
       await expect(async () => {
         await expect(lurkingDoroButton).toBeEnabled();
       }).toPass();
@@ -94,19 +87,16 @@ test.describe("Autoclicker System", () => {
     }) => {
       const walkinDoroButton = page.locator('[data-id="4"]'); // Walkin Doro (15 DPS)
 
-      // Hover over the button to trigger the tooltip.
       await walkinDoroButton.hover();
 
       const tooltip = walkinDoroButton.locator(".upgrade-tooltip");
       await expect(tooltip).toBeVisible();
 
-      // Verify key pieces of information are present in the tooltip.
       await expect(tooltip).toContainText("Nice day out huh?"); // Description
       await expect(tooltip).toContainText("Provides 15 Doros per second."); // Effect
     });
   });
 
-  // --- NEW: Group for Advanced Mechanics and Scaling Tests ---
   test.describe("Advanced Mechanics and Scaling", () => {
     test("should correctly handle multiple purchases of the same autoclicker", async ({
       page,
@@ -147,26 +137,17 @@ test.describe("Autoclicker System", () => {
       });
       expect(initialCost).toBe(1500);
 
-      // 1. Get the state immediately BEFORE the action.
       const dorosBefore = await page.evaluate(
         () => window.doroGame.state.doros
       );
 
-      // 2. Perform the action.
       await sirenDoroButton.click();
 
-      // 3. Assert that the UI has updated to reflect the purchase.
-      // This is a robust way to wait for the state change to complete.
       await expect(page.locator("#score-display")).not.toContainText("50,000");
 
-      // 4. Get the state immediately AFTER the action.
       const dorosAfter = await page.evaluate(() => window.doroGame.state.doros);
 
-      // 5. Assert that the final state is close to the expected change.
-      // This correctly ignores any passive income generated during the test.
       const expectedDoros = dorosBefore - initialCost;
-      // FIX: Use a negative precision to round to the nearest 100.
-      // This verifies the large deduction occurred while ignoring small DPS gains.
       expect(dorosAfter).toBeCloseTo(expectedDoros, -2);
 
       // Verify the item was purchased.

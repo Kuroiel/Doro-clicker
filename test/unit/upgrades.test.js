@@ -1,5 +1,3 @@
-// root/test/unit/upgrades.test.js - Corrected for new data structure
-
 import { upgrades } from "../../src/scripts/Systems/upgrades.js";
 
 describe("Upgrades Data Module", () => {
@@ -31,11 +29,11 @@ describe("Upgrades Data Module", () => {
 
     it("should calculate cost exponentially", () => {
       upgrade.purchased = 0;
-      expect(upgrade.cost).toBe(10); // 10 * 10^0
+      expect(upgrade.cost).toBe(10);
       upgrade.purchased = 1;
-      expect(upgrade.cost).toBe(100); // 10 * 10^1
+      expect(upgrade.cost).toBe(100);
       upgrade.purchased = 2;
-      expect(upgrade.cost).toBe(1000); // 10 * 10^2
+      expect(upgrade.cost).toBe(1000);
     });
 
     it("should generate correct effect description", () => {

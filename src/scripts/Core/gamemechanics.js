@@ -1,4 +1,3 @@
-// gamemechanics.js - Corrected and improved version
 export class GameMechanics {
   constructor(game) {
     this.game = game;
@@ -9,7 +8,6 @@ export class GameMechanics {
   handleClick() {
     this.game.state.manualClicks += 1;
     this.game.state.increment(this.clickMultiplier);
-    // The state's `notify` method will now handle triggering UI updates
     this.game.state.notify();
   }
 
@@ -30,8 +28,6 @@ export class GameMechanics {
       item.purchased += 1;
       this.applyUpgrade(item);
 
-      // Instead of direct UI calls, notify the UIManager that state has changed.
-      // This also triggers the affordability check for all other buttons.
       this.game.state.notify();
 
       requestAnimationFrame(() => {
@@ -61,7 +57,6 @@ export class GameMechanics {
         this.recalculateClickMultiplier();
         break;
 
-      // CHANGED: Correctly apply global DPS multiplier
       case "globalDpsMultiplier":
         this.recalculateGlobalDpsMultiplier();
         this.game.autoclickerSystem.recalculateDPS();
@@ -71,7 +66,6 @@ export class GameMechanics {
         this.game.autoclickerSystem.recalculateDPS();
         break;
 
-      // CHANGED: Make dpsMultiplier generic
       case "dpsMultiplier":
         if (upgrade.targetAutoclickerId !== null) {
           this.recalculateDpsForAutoclicker(upgrade.targetAutoclickerId);
@@ -80,7 +74,6 @@ export class GameMechanics {
     }
   }
 
-  // NEW METHOD: Recalculates DPS for a specific autoclicker based on its upgrades
   recalculateDpsForAutoclicker(autoclickerId) {
     const autoclicker = this.game.autoclickers.find(
       (a) => a.id === autoclickerId
@@ -103,7 +96,6 @@ export class GameMechanics {
     this.game.autoclickerSystem.recalculateDPS();
   }
 
-  // NEW METHOD: Recalculates the total global DPS multiplier
   recalculateGlobalDpsMultiplier() {
     let totalMultiplier = 1;
     const globalUpgrades = this.game.upgrades.filter(
@@ -122,7 +114,5 @@ export class GameMechanics {
     return this.game.state.doros >= cost;
   }
 
-  cleanup() {
-    // Cleanup if needed
-  }
+  cleanup() {}
 }

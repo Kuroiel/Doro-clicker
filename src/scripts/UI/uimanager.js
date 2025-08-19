@@ -10,7 +10,6 @@ export class UIManager {
     this._lastAffordabilityCheck = 0;
     this.AFFORDABILITY_CHECK_INTERVAL = 250;
 
-    // The state listener is the primary driver for all passive UI updates.
     this.game.state.addListener(() => {
       requestAnimationFrame(() => {
         this.updateScoreDisplay();
@@ -20,8 +19,6 @@ export class UIManager {
     });
   }
 
-  // EFFICIENT: This is now the main affordability update loop.
-  // It only toggles classes and the disabled property, which is very fast.
   updateAllAffordability() {
     const allItems = [...this.game.autoclickers, ...this.game.upgrades];
 
@@ -125,12 +122,9 @@ export class UIManager {
     return { visibleUpgrades, hiddenUpgrades };
   }
 
-  // LIGHTWEIGHT: This function now only updates text content, not the whole element.
   refreshUpgradeButton(upgradeId) {
     const button = DOMHelper.getUpgradeButton(upgradeId);
     if (!button) {
-      // If the button doesn't exist, it might have just become visible.
-      // A full render is the safest way to handle this.
       this.forceFullUpdate();
       return;
     }

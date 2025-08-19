@@ -1,8 +1,6 @@
 import { DoroClicker } from "./Core/doroclicker.js";
 
 function initializeGame() {
-  // Only initialize the game if an instance does not already exist.
-  // This prevents re-initialization in some hot-reloading environments.
   if (!window.doroGame) {
     try {
       // Create and assign the game instance to the window for global access/debugging.
@@ -22,12 +20,8 @@ function initializeGame() {
   }
 }
 
-// This is the standard, robust way to handle DOM readiness.
 if (document.readyState === "loading") {
-  // We are still loading, so wait for the event.
   document.addEventListener("DOMContentLoaded", initializeGame);
 } else {
-  // The DOM is already ready, so we can initialize immediately.
-  // This handles cases where the script is loaded with 'defer' or 'async'.
   initializeGame();
 }

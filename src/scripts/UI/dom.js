@@ -1,4 +1,3 @@
-// dom.js - Cleaned and organized DOM helper class
 export class DOMHelper {
   // ======================
   // Score Related Methods
@@ -21,7 +20,6 @@ export class DOMHelper {
     try {
       const scoreElement = this.getScoreElement();
       if (!scoreElement) return 0;
-      // Use regex to find number-like strings and remove commas before parsing
       const numberMatch = scoreElement.textContent.match(/[\d,.]+/);
       return numberMatch ? parseInt(numberMatch[0].replace(/,/g, ""), 10) : 0;
     } catch (error) {
@@ -43,8 +41,6 @@ export class DOMHelper {
   }
 
   static getUpgradeButton(upgradeId) {
-    // The selector is specific enough that a try/catch is likely overkill,
-    // but it's safe to keep.
     return document.querySelector(`.upgrade-button[data-id="${upgradeId}"]`);
   }
 
