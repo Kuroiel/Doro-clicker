@@ -1,9 +1,7 @@
-// test/unit/index.test.js - Final Corrected and Robust Version
+const mockDoroClickerConstructor = jest.fn();
 
-// We mock the dependency at the top level.
-// This mock will be used by all tests in this file.
 jest.mock("../../src/scripts/Core/doroclicker.js", () => ({
-  DoroClicker: jest.fn(),
+  DoroClicker: mockDoroClickerConstructor,
 }));
 
 // Mock console.error to keep test output clean.
@@ -12,9 +10,21 @@ const consoleErrorSpy = jest
   .mockImplementation(() => {});
 
 describe("Game Initialization (index.js)", () => {
+  // This variable will hold our single, shared mock constructor.
+  let DoroClicker;
+
   beforeEach(() => {
-    // Before each test, we clear any previous mock calls and reset the global state.
-    jest.clearAllMocks();
+    // Before each test, reset modules to ensure a fresh, un-executed index.js.
+    jest.resetModules();
+
+    // Clear any previous calls from the singleton mock.
+    mockDoroClickerConstructor.mockClear();
+
+    // Import the mock *after* resetting modules. This is still good practice.
+    // It will now correctly receive our singleton mock.
+    DoroClicker = require("../../src/scripts/Core/doroclicker.js").DoroClicker;
+
+    // Reset global state.
     delete window.doroGame;
   });
 
@@ -23,26 +33,22 @@ describe("Game Initialization (index.js)", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("should NOT initialize the game immediately upon script execution", () => {
-    // Arrange: Reset modules to ensure we get a fresh, un-executed index.js
-    jest.resetModules();
-    // FIX: Explicitly set the readyState to 'loading' to test the deferred path.
+  it("should NOT initialize the game immediately upon script execution if DOM is loading", () => {
+    // Arrange: Set the readyState to 'loading'.
     Object.defineProperty(document, "readyState", {
       value: "loading",
       writable: true,
     });
 
-    // Act: Run the script's code.
+    // Act: Run the script's code. This will attach the listener.
     require("../../src/scripts/index.js");
-    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
 
     // Assert: The constructor should not have been called yet.
     expect(DoroClicker).not.toHaveBeenCalled();
   });
 
   it("should initialize the game immediately if the DOM is already ready", () => {
-    // Arrange: Reset modules and set the readyState to 'complete'.
-    jest.resetModules();
+    // Arrange: Set the readyState to 'complete'.
     Object.defineProperty(document, "readyState", {
       value: "complete",
       writable: true,
@@ -50,15 +56,13 @@ describe("Game Initialization (index.js)", () => {
 
     // Act: Run the script's code.
     require("../../src/scripts/index.js");
-    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
 
     // Assert: The constructor should have been called immediately.
     expect(DoroClicker).toHaveBeenCalledTimes(1);
   });
 
   it("should initialize the game when DOMContentLoaded is dispatched", () => {
-    // Arrange: Reset modules and set up the DOM state for a successful event.
-    jest.resetModules();
+    // Arrange: Set the DOM state to loading.
     Object.defineProperty(document, "readyState", {
       value: "loading",
       writable: true,
@@ -66,7 +70,9 @@ describe("Game Initialization (index.js)", () => {
 
     // Act I: Run the script to attach the event listener.
     require("../../src/scripts/index.js");
-    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+
+    // Assert I: Confirm it hasn't been called yet.
+    expect(DoroClicker).not.toHaveBeenCalled();
 
     // Act II: Simulate the browser firing the event.
     Object.defineProperty(document, "readyState", {
@@ -75,42 +81,41 @@ describe("Game Initialization (index.js)", () => {
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
 
-    // Assert: The constructor should have been called exactly once.
+    // Assert II: The constructor should now have been called exactly once.
     expect(DoroClicker).toHaveBeenCalledTimes(1);
   });
 
   it("should assign the new game instance to window.doroGame", () => {
-    // Arrange
-    jest.resetModules();
+    // Arrange I: Set the DOM state to loading.
     Object.defineProperty(document, "readyState", {
       value: "loading",
       writable: true,
     });
-    // Act I: Load the script to set up the listener.
-    require("../../src/scripts/index.js");
-    // Arrange II: Get the fresh mock and configure it.
-    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
+
+    // Arrange II: Configure the mock's return value *before* the SUT runs.
     const mockGameInstance = { id: "mock-game" };
     DoroClicker.mockReturnValue(mockGameInstance);
+
+    // Act I: Run the script. It will now import our pre-configured singleton mock
+    // and attach the listener.
+    require("../../src/scripts/index.js");
 
     // Act II: Trigger the listener.
     document.dispatchEvent(new Event("DOMContentLoaded"));
 
-    // Assert
+    // Assert: The global variable should be the exact instance we told the mock to return.
     expect(window.doroGame).toBe(mockGameInstance);
   });
 
   it("should NOT initialize the game if window.doroGame already exists", () => {
     // Arrange
-    jest.resetModules();
-    const { DoroClicker } = require("../../src/scripts/Core/doroclicker.js");
     Object.defineProperty(document, "readyState", {
       value: "loading",
       writable: true,
     });
     window.doroGame = { id: "existing-game" }; // Set the pre-existing condition.
 
-    // Act
+    // Act: Load the script and dispatch the event.
     require("../../src/scripts/index.js");
     Object.defineProperty(document, "readyState", {
       value: "interactive",
@@ -118,7 +123,7 @@ describe("Game Initialization (index.js)", () => {
     });
     document.dispatchEvent(new Event("DOMContentLoaded"));
 
-    // Assert
+    // Assert: Because window.doroGame already existed, the constructor is never called.
     expect(DoroClicker).not.toHaveBeenCalled();
   });
 });

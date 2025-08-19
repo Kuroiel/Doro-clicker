@@ -30,12 +30,6 @@ export class GameMechanics {
       item.purchased += 1;
       this.applyUpgrade(item);
 
-      console.log(`[PURCHASE] ${item.name}`, {
-        beforePurchase: cost,
-        afterPurchase: item.cost,
-        purchased: item.purchased,
-      });
-
       // Instead of direct UI calls, notify the UIManager that state has changed.
       // This also triggers the affordability check for all other buttons.
       this.game.state.notify();
