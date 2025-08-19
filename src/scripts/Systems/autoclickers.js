@@ -122,11 +122,11 @@ export const autoclickers = [
   }),
   new Autoclicker({
     id: 10,
-    name: "Flying Doro",
-    baseCost: 99999,
+    name: "Mambo Doro",
+    baseCost: 99998,
     baseDPS: 2345,
-    icon: "./src/assets/dorofly.webp",
-    description: "Doros can fly!?",
+    icon: "./src/assets/mambodoro.png",
+    description: "Mambo mambo, omatsuri mambo!",
     template: "HIGH_TIER",
   }),
   new Autoclicker({
