@@ -122,7 +122,7 @@ export const autoclickers = [
   }),
   new Autoclicker({
     id: 10,
-    name: "Mambo Doro",
+    name: "MatikanetannhauserDoro",
     baseCost: 99998,
     baseDPS: 2345,
     icon: "./src/assets/mambodoro.png",
