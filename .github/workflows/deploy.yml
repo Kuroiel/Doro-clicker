@@ -1,0 +1,119 @@
+name: Deploy with Retry & Rollback
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # ------------------------------------------------------------------
+  # JOB 1: Unit Tests (The Gatekeeper)
+  # Retries up to 5 times. If one passes, it moves on.
+  # ------------------------------------------------------------------
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+
+      # "nick-fields/retry" handles the "run 3-5 times" logic
+      - name: Run Unit Tests with Retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 5
+          max_attempts: 5 # Try 5 times
+          retry_on: error # Retry if the command fails
+          command: npm run test:unit
+
+  # ------------------------------------------------------------------
+  # JOB 2: Deploy (Only if Unit Tests passed)
+  # ------------------------------------------------------------------
+  deploy:
+    needs: unit-tests
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./dist"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ------------------------------------------------------------------
+  # JOB 3: E2E Tests (Runs against the LIVE site)
+  # ------------------------------------------------------------------
+  e2e-tests:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # Run Playwright against the LIVE URL (github.io)
+      # We retry 5 times. If ALL fail, this job marks as Failed.
+      - name: Run E2E on Live Site with Retry
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 5
+          retry_on: error
+          # IMPORTANT: Pass the live URL env var here
+          command: npx playwright test --project=chromium
+        env:
+          # This tells your Playwright config to look at the live site
+          # You must update playwright.config.js to use this env var (see below)
+          E2E_BASE_URL: https://kuroiel.github.io/Doro-clicker/
+
+  # ------------------------------------------------------------------
+  # JOB 4: Rollback (Only runs if E2E Fails)
+  # ------------------------------------------------------------------
+  rollback:
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    # This condition is crucial: Only run if e2e-tests FAILED
+    if: failure()
+    steps:
+      - name: Checkout Previous Commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # We need history to go back
+
+      - name: Revert to previous commit
+        run: git checkout HEAD^
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+
+      # We upload and deploy again (effectively overwriting the bad deployment)
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./dist"
+      - name: Emergency Rollback Deploy
+        uses: actions/deploy-pages@v4
