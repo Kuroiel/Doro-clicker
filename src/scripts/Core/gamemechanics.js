@@ -7,7 +7,8 @@ export class GameMechanics {
 
   handleClick() {
     this.game.state.manualClicks += 1;
-    this.game.state.increment(this.clickMultiplier);
+    const clickPower = this.game.modifierSystem.apply(1, "player", "click");
+    this.game.state.increment(clickPower);
     this.game.state.notify();
   }
 
@@ -26,7 +27,12 @@ export class GameMechanics {
 
       this.game.state.doros -= cost;
       item.purchased += 1;
-      this.applyUpgrade(item);
+
+      // New data-driven approach: just recalculate modifiers
+      this.game.modifierSystem.recalculate();
+
+      // Recalculate DPS if needed
+      this.game.autoclickerSystem.recalculateDPS();
 
       this.game.state.notify();
 
@@ -40,73 +46,21 @@ export class GameMechanics {
     }
   }
 
+  // These methods are now mostly redundant or simplified
   recalculateClickMultiplier() {
-    let totalMultiplier = 1;
-    const clickUpgrades = this.game.upgrades.filter(
-      (u) => u.type === "clickMultiplier" && u.purchased > 0
-    );
-    for (const upgrade of clickUpgrades) {
-      totalMultiplier += upgrade.value * upgrade.purchased;
-    }
-    this.clickMultiplier = totalMultiplier;
+    // Redundant now, but kept for compatibility if needed
   }
 
   applyUpgrade(upgrade) {
-    switch (upgrade.type) {
-      case "clickMultiplier":
-        this.recalculateClickMultiplier();
-        break;
-
-      case "globalDpsMultiplier":
-        this.recalculateGlobalDpsMultiplier();
-        this.game.autoclickerSystem.recalculateDPS();
-        break;
-
-      case "autoclicker":
-        this.game.autoclickerSystem.recalculateDPS();
-        break;
-
-      case "dpsMultiplier":
-        if (upgrade.targetAutoclickerId !== null) {
-          this.recalculateDpsForAutoclicker(upgrade.targetAutoclickerId);
-        }
-        break;
-    }
+    // Redundant now as purchaseUpgrade handles it via modifierSystem.recalculate()
   }
 
   recalculateDpsForAutoclicker(autoclickerId) {
-    const autoclicker = this.game.autoclickers.find(
-      (a) => a.id === autoclickerId
-    );
-    if (!autoclicker) return;
-
-    const dpsUpgrades = this.game.upgrades.filter(
-      (u) =>
-        u.type === "dpsMultiplier" &&
-        u.targetAutoclickerId === autoclickerId &&
-        u.purchased > 0
-    );
-
-    let multiplier = 1;
-    for (const upgrade of dpsUpgrades) {
-      multiplier *= Math.pow(upgrade.value, upgrade.purchased);
-    }
-
-    autoclicker.value = autoclicker.baseDPS * multiplier;
-    this.game.autoclickerSystem.recalculateDPS();
+    // Redundant now
   }
 
   recalculateGlobalDpsMultiplier() {
-    let totalMultiplier = 1;
-    const globalUpgrades = this.game.upgrades.filter(
-      (u) => u.type === "globalDpsMultiplier" && u.purchased > 0
-    );
-
-    for (const upgrade of globalUpgrades) {
-      totalMultiplier *= Math.pow(upgrade.value, upgrade.purchased);
-    }
-
-    this.game.state.globalDpsMultiplier = totalMultiplier;
+    // Redundant now
   }
 
   canAfford(item) {

@@ -49,7 +49,7 @@ export class SaveSystem {
       // Load purchased counts for autoclickers
       saveData.autoclickers?.forEach((savedClicker) => {
         const clicker = this.game.autoclickers.find(
-          (a) => a.id === savedClicker.id
+          (a) => a.id === savedClicker.id,
         );
         if (clicker) clicker.purchased = savedClicker.purchased || 0;
       });
@@ -57,27 +57,16 @@ export class SaveSystem {
       // Load purchased counts for upgrades
       saveData.upgrades?.forEach((savedUpgrade) => {
         const upgrade = this.game.upgrades.find(
-          (u) => u.id === savedUpgrade.id
+          (u) => u.id === savedUpgrade.id,
         );
         if (upgrade) {
           upgrade.purchased = savedUpgrade.purchased || 0;
         }
       });
 
-      this.game.mechanics.recalculateClickMultiplier();
-      this.game.mechanics.recalculateGlobalDpsMultiplier();
-
-      // Recalculate DPS for all autoclickers that might have upgrades
-      const upgradedAutoclickerIds = new Set(
-        this.game.upgrades
-          .map((u) => u.targetAutoclickerId)
-          .filter((id) => id != null)
-      );
-      upgradedAutoclickerIds.forEach((id) => {
-        this.game.mechanics.recalculateDpsForAutoclicker(id);
-      });
-
-      this.game.autoclickerSystem.recalculateDPS(); // Trigger a final DPS update
+      // Recalculate everything based on loaded data
+      this.game.modifierSystem.recalculate();
+      this.game.autoclickerSystem.recalculateDPS();
 
       this.game.ui.forceFullUpdate();
     } catch (error) {
@@ -92,14 +81,10 @@ export class SaveSystem {
     localStorage.removeItem("doroClickerSave");
 
     this.game.state.reset();
-    this.game.autoclickers.forEach((clicker) => {
-      clicker.purchased = 0;
-      clicker.value = clicker.baseDPS; // Explicitly reset derived value
-    });
+    this.game.autoclickers.forEach((clicker) => (clicker.purchased = 0));
     this.game.upgrades.forEach((upgrade) => (upgrade.purchased = 0));
 
-    this.game.mechanics.recalculateClickMultiplier();
-    this.game.mechanics.recalculateGlobalDpsMultiplier();
+    this.game.modifierSystem.recalculate();
     this.game.autoclickerSystem.recalculateDPS();
 
     this.game.ui.forceFullUpdate();
@@ -111,7 +96,7 @@ export class SaveSystem {
     if (this.saveInterval) clearInterval(this.saveInterval);
     this.saveInterval = setInterval(
       () => this.saveGame(),
-      this.SAVE_INTERVAL_MS
+      this.SAVE_INTERVAL_MS,
     );
   }
 

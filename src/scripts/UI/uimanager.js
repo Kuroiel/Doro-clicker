@@ -162,13 +162,14 @@ export class UIManager {
     }
 
     // If an upgrade is no longer visible after purchase (e.g., maxed out), re-render.
-    if (
-      item.type !== "autoclicker" &&
-      !item.isVisible({
-        ...this.game,
-        getTotalDPS: () => this.game.state.getTotalDPS(),
-      })
-    ) {
+    const gameStateContext = {
+      autoclickers: this.game.autoclickers,
+      getTotalDPS: () => this.game.state.getTotalDPS(),
+      state: this.game.state,
+      upgrades: this.game.upgrades,
+    };
+
+    if (item.type !== "autoclicker" && !item.isVisible(gameStateContext)) {
       this.forceFullUpdate();
     }
   }

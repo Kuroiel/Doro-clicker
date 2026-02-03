@@ -118,6 +118,21 @@ export class DOMHelper {
     }
   }
 
+  /**
+   * Replaces an element with new HTML content
+   * @param {HTMLElement} oldElement - The element to replace
+   * @param {string} newHTML - The HTML string to replace with
+   */
+  static replaceElement(oldElement, newHTML) {
+    if (!oldElement) return;
+    const template = document.createElement("template");
+    template.innerHTML = newHTML.trim();
+    const newElement = template.content.firstChild;
+    if (newElement) {
+      oldElement.replaceWith(newElement);
+    }
+  }
+
   // ======================
   // Reset UI Methods
   // ======================

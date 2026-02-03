@@ -46,8 +46,8 @@ export class EventHandlers {
     this._addListener(sidebar, "click", (e) => {
       const button = e.target.closest(".upgrade-button");
       if (button && !button.disabled) {
-        const upgradeId = parseInt(button.dataset.id);
-        if (!isNaN(upgradeId)) {
+        const upgradeId = button.dataset.id;
+        if (upgradeId) {
           button.classList.add("processing");
           const purchased = this.game.mechanics.purchaseUpgrade(upgradeId);
           if (purchased) {

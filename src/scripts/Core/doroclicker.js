@@ -7,11 +7,13 @@ import { EventHandlers } from "../Events/eventhandlers.js";
 import { SaveSystem } from "../Systems/savesystem.js";
 import { AutoclickerSystem } from "../Systems/autoclickersystem.js";
 import { ViewManager } from "../Events/viewmanager.js";
+import { ModifierSystem } from "../Systems/modifiers.js";
 
 class DoroClicker {
   constructor() {
     // Initialize core systems
     this.state = new GameState();
+    this.modifierSystem = new ModifierSystem(this);
     this.viewManager = new ViewManager(this);
     this.mechanics = new GameMechanics(this);
     this.autoclickerSystem = new AutoclickerSystem(this);

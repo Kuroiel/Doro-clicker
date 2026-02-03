@@ -40,18 +40,25 @@ class Autoclicker {
     this.type = "autoclicker";
     this.baseCost = config.baseCost;
     this.baseDPS = config.baseDPS;
-    this.value = config.baseDPS;
     this.purchased = 0;
     this.icon = config.icon;
     this.description = config.description;
     this.template =
       AUTOCLICKER_TEMPLATES[config.template] || AUTOCLICKER_TEMPLATES.BASIC;
+    this.modifiers = config.modifiers || [];
+  }
+
+  // Value is now dynamic based on modifiers
+  get value() {
+    if (!window.doroGame || !window.doroGame.modifierSystem) return this.baseDPS;
+    return window.doroGame.modifierSystem.apply(this.baseDPS, this.id, "dps");
   }
 
   get effectDescription() {
-    return `Provides ${this.value} Doros per second.\nCurrently providing: ${
-      this.value * this.purchased
-    } Doros per second.`;
+    const currentValue = this.value;
+    return `Provides ${currentValue.toFixed(1)} Doros per second.\nCurrently providing: ${(
+      currentValue * this.purchased
+    ).toFixed(1)} Doros per second.`;
   }
 
   get cost() {
@@ -67,7 +74,7 @@ class Autoclicker {
 // Instantiate and export autoclickers directly
 export const autoclickers = [
   new Autoclicker({
-    id: 2,
+    id: "ac_lurking_doro",
     name: "Lurking Doro",
     baseCost: 10,
     baseDPS: 1,
@@ -76,7 +83,7 @@ export const autoclickers = [
     template: "BASIC",
   }),
   new Autoclicker({
-    id: 4,
+    id: "ac_walkin_doro",
     name: "Walkin Doro",
     baseCost: 120,
     baseDPS: 15,
@@ -85,7 +92,7 @@ export const autoclickers = [
     template: "MID_TIER",
   }),
   new Autoclicker({
-    id: 6,
+    id: "ac_napping_siren_doro",
     name: "Napping Siren Doro",
     baseCost: 1500,
     baseDPS: 69,
@@ -94,7 +101,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 7,
+    id: "ac_comfy_doro",
     name: "Comfy Doro",
     baseCost: 6900,
     baseDPS: 120,
@@ -103,7 +110,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 8,
+    id: "ac_doro_dent",
     name: "Doro Dent",
     baseCost: 15000,
     baseDPS: 500,
@@ -112,7 +119,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 9,
+    id: "ac_mcfraud",
     name: "McFraud",
     baseCost: 50000,
     baseDPS: 1200,
@@ -121,7 +128,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 10,
+    id: "ac_mambodoro",
     name: "MatikanetannhauserDoro",
     baseCost: 99998,
     baseDPS: 2345,
@@ -130,7 +137,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 11,
+    id: "ac_cindoro",
     name: "CinDoro",
     baseCost: 169696,
     baseDPS: 6969,
@@ -139,7 +146,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 12,
+    id: "ac_doro_fish",
     name: "Doro Fish",
     baseCost: 400000,
     baseDPS: 11250,
@@ -148,7 +155,7 @@ export const autoclickers = [
     template: "HIGH_TIER",
   }),
   new Autoclicker({
-    id: 13,
+    id: "ac_doro_dash",
     name: "Doro Dash",
     baseCost: 999999,
     baseDPS: 49999,

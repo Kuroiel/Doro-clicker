@@ -5,7 +5,6 @@ export class GameState {
     this.totalAutoDoros = 0;
     this.totalDoros = 0;
     this.listeners = [];
-    this.globalDpsMultiplier = 1;
     this._lastNotifiedDoros = 0;
     this._autoclickers = [];
   }
@@ -26,18 +25,20 @@ export class GameState {
       return;
     }
 
-    // Round to 2 decimal places, treating very small numbers as 0
-    const amountToAdd =
-      dpsAmount < 0.005 ? 0 : parseFloat(dpsAmount.toFixed(2));
-
-    this.doros += amountToAdd;
-    this.totalAutoDoros += amountToAdd;
-    this.totalDoros += amountToAdd;
+    // Use full precision for internal state to avoid losing progress at low DPS
+    this.doros += dpsAmount;
+    this.totalAutoDoros += dpsAmount;
+    this.totalDoros += dpsAmount;
     this.notify();
   }
 
   addListener(callback) {
     this.listeners.push(callback);
+    return () => this.removeListener(callback);
+  }
+
+  removeListener(callback) {
+    this.listeners = this.listeners.filter((cb) => cb !== callback);
   }
 
   setAutoclickers(autoclickers) {
@@ -68,16 +69,12 @@ export class GameState {
         total += clicker.value * clicker.purchased;
       }
     });
-    return total * this.globalDpsMultiplier;
-  }
 
-  applyGlobalDpsMultiplier(multiplier) {
-    this.globalDpsMultiplier *= multiplier;
-  }
-
-  // Modify getCurrentDPSMultiplier to include global multiplier
-  getCurrentDPSMultiplier() {
-    return this.globalDpsMultiplier;
+    const globalMultiplier = window.doroGame?.modifierSystem?.getMultiplier(
+      "global",
+      "dps",
+    );
+    return total * (globalMultiplier || 1);
   }
 
   // ======================
@@ -94,7 +91,6 @@ export class GameState {
       manualClicks: this.manualClicks,
       totalAutoDoros: this.totalAutoDoros,
       totalDoros: this.totalDoros,
-      globalDpsMultiplier: this.globalDpsMultiplier,
       lastSaved: Date.now(),
     };
   }
@@ -117,7 +113,6 @@ export class GameState {
     this.manualClicks = safeNumber(data.manualClicks, 0);
     this.totalAutoDoros = safeNumber(data.totalAutoDoros, 0);
     this.totalDoros = safeNumber(data.totalDoros, 0);
-    this.globalDpsMultiplier = safeNumber(data.globalDpsMultiplier, 1);
   }
 
   /**
@@ -128,7 +123,6 @@ export class GameState {
     this.manualClicks = 0;
     this.totalAutoDoros = 0;
     this.totalDoros = 0;
-    this.globalDpsMultiplier = 1;
     this.notify();
   }
 }
