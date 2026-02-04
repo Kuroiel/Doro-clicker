@@ -120,7 +120,7 @@ describe("EventHandlers", () => {
     it("should handle click on an enabled upgrade button", () => {
       eventHandlers.setupUpgradeButtonListeners();
       upgradeButton.click();
-      expect(mockGame.mechanics.purchaseUpgrade).toHaveBeenCalledWith(1);
+      expect(mockGame.mechanics.purchaseUpgrade).toHaveBeenCalledWith("1");
     });
 
     it("should ignore disabled upgrade buttons", () => {

@@ -74,7 +74,7 @@ export class GameState {
       "global",
       "dps",
     );
-    return total * (globalMultiplier || 1);
+    return total * (globalMultiplier ?? 1);
   }
 
   // ======================

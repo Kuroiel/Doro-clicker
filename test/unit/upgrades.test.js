@@ -8,7 +8,7 @@ describe("Upgrades Data Module", () => {
     // Reset mock state and purchased counts before each test
     mockGameState = {
       autoclickers: [
-        { id: 2, purchased: 0 }, // Lurking Doro
+        { id: "ac_lurking_doro", purchased: 0 }, // Lurking Doro
       ],
       upgrades: upgrades, // Provide the actual upgrades array
       getTotalDPS: jest.fn().mockReturnValue(0),
@@ -16,8 +16,8 @@ describe("Upgrades Data Module", () => {
     upgrades.forEach((u) => (u.purchased = 0));
   });
 
-  describe("Doro Power (id: 1)", () => {
-    const upgrade = upgrades.find((u) => u.id === 1);
+  describe("Doro Power (id: upg_doro_power)", () => {
+    const upgrade = upgrades.find((u) => u.id === "upg_doro_power");
 
     it("should have correct basic properties", () => {
       expect(upgrade.name).toBe("Doro Power");
@@ -45,21 +45,21 @@ describe("Upgrades Data Module", () => {
   });
 
   describe("Lurking Doro Upgrades (Chain)", () => {
-    const upgrade1 = upgrades.find((u) => u.id === 3);
-    const upgrade2 = upgrades.find((u) => u.id === 14);
+    const upgrade1 = upgrades.find((u) => u.id === "upg_lurking_1");
+    const upgrade2 = upgrades.find((u) => u.id === "upg_lurking_2");
 
-    it("Upgrade I (id: 3) should have correct properties", () => {
+    it("Upgrade I (id: upg_lurking_1) should have correct properties", () => {
       expect(upgrade1.name).toBe("Lurking Doro Upgrade I");
       expect(upgrade1.type).toBe("dpsMultiplier");
       expect(upgrade1.baseCost).toBe(500);
       expect(upgrade1.maxPurchases).toBe(1);
-      expect(upgrade1.targetAutoclickerId).toBe(2);
+      expect(upgrade1.targetAutoclickerId).toBe(undefined); // Not expecting targetAutoclickerId on modifiers system
     });
 
-    it("Upgrade II (id: 14) should have correct properties and prerequisite", () => {
+    it("Upgrade II (id: upg_lurking_2) should have correct properties and prerequisite", () => {
       expect(upgrade2.name).toBe("Lurking Doro Upgrade II");
       expect(upgrade2.baseCost).toBe(10000);
-      expect(upgrade2.prerequisiteUpgradeId).toBe(3);
+      expect(upgrade2.prerequisiteUpgradeId).toBe("upg_lurking_1");
     });
 
     it("Upgrade I should be visible when Lurking Doro reaches level 10", () => {
@@ -89,8 +89,8 @@ describe("Upgrades Data Module", () => {
     });
   });
 
-  describe("Motivating Doro (id: 5)", () => {
-    const upgrade = upgrades.find((u) => u.id === 5);
+  describe("Motivating Doro (id: upg_motivating_doro)", () => {
+    const upgrade = upgrades.find((u) => u.id === "upg_motivating_doro");
 
     it("should generate correct effect description", () => {
       const desc = upgrade.effectDescription();

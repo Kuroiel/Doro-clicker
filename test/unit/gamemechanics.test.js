@@ -70,17 +70,24 @@ describe("GameMechanics", () => {
       autoclickerSystem: {
         recalculateDPS: jest.fn(),
       },
+      modifierSystem: {
+        apply: jest.fn((base) => base),
+        recalculate: jest.fn(),
+      },
     };
     mechanics = new GameMechanics(mockGame);
   });
 
   describe("handleClick", () => {
     it("should increment manual clicks and game state, then notify", () => {
+      // Mock modifier system return value
+      mockGame.modifierSystem.apply.mockReturnValue(5);
+      
       mechanics.handleClick();
+      
       expect(mockGame.state.manualClicks).toBe(1);
-      expect(mockGame.state.increment).toHaveBeenCalledWith(
-        mechanics.clickMultiplier
-      );
+      expect(mockGame.modifierSystem.apply).toHaveBeenCalledWith(1, "player", "click");
+      expect(mockGame.state.increment).toHaveBeenCalledWith(5);
       expect(mockGame.state.notify).toHaveBeenCalledTimes(1);
     });
   });
@@ -95,6 +102,8 @@ describe("GameMechanics", () => {
       expect(result).toBe(true);
       expect(upgrade.purchased).toBe(1);
       expect(mockGame.state.doros).toBe(initialDoros - upgrade.cost);
+      expect(mockGame.modifierSystem.recalculate).toHaveBeenCalled();
+      expect(mockGame.autoclickerSystem.recalculateDPS).toHaveBeenCalled();
       expect(mockGame.state.notify).toHaveBeenCalledTimes(1);
       expect(mockGame.ui.refreshUpgradeButton).toHaveBeenCalledWith(upgrade.id);
     });
@@ -103,58 +112,13 @@ describe("GameMechanics", () => {
       mockGame.state.doros = 5;
       const result = mechanics.purchaseUpgrade(1);
       expect(result).toBe(false);
+      expect(mockGame.modifierSystem.recalculate).not.toHaveBeenCalled();
       expect(mockGame.state.notify).not.toHaveBeenCalled();
     });
 
     it("should return false if upgrade does not exist", () => {
       const result = mechanics.purchaseUpgrade(999);
       expect(result).toBe(false);
-    });
-  });
-
-  describe("applyUpgrade", () => {
-    it("should trigger recalculateClickMultiplier for 'clickMultiplier' type", () => {
-      mechanics.recalculateClickMultiplier = jest.fn();
-      mechanics.applyUpgrade(mockGame.upgrades[0]);
-      expect(mechanics.recalculateClickMultiplier).toHaveBeenCalledTimes(1);
-    });
-
-    it("should trigger recalculateDpsForAutoclicker for 'dpsMultiplier' type", () => {
-      mechanics.recalculateDpsForAutoclicker = jest.fn();
-      mechanics.applyUpgrade(mockGame.upgrades[1]);
-      expect(mechanics.recalculateDpsForAutoclicker).toHaveBeenCalledWith(2);
-    });
-
-    it("should trigger recalculateGlobalDpsMultiplier for 'globalDpsMultiplier' type", () => {
-      mechanics.recalculateGlobalDpsMultiplier = jest.fn();
-      mechanics.applyUpgrade(mockGame.upgrades[2]);
-      expect(mechanics.recalculateGlobalDpsMultiplier).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("Recalculation methods", () => {
-    it("recalculateClickMultiplier should sum up bonuses correctly", () => {
-      const doroPower = mockGame.upgrades.find((u) => u.id === 1);
-      doroPower.purchased = 2; // Purchase 2 levels
-      mechanics.recalculateClickMultiplier();
-      // Base 1 + (value 1 * purchased 2) = 3
-      expect(mechanics.clickMultiplier).toBe(3);
-    });
-
-    it("recalculateDpsForAutoclicker should apply multipliers correctly", () => {
-      const dpsUpgrade = mockGame.upgrades.find((u) => u.id === 3);
-      dpsUpgrade.purchased = 2;
-      mechanics.recalculateDpsForAutoclicker(2);
-      const autoclicker = mockGame.autoclickers.find((a) => a.id === 2);
-      expect(autoclicker.value).toBeCloseTo(1 * Math.pow(1.15, 2));
-      expect(mockGame.autoclickerSystem.recalculateDPS).toHaveBeenCalled();
-    });
-
-    it("recalculateGlobalDpsMultiplier should update state correctly", () => {
-      const globalUpgrade = mockGame.upgrades.find((u) => u.id === 5);
-      globalUpgrade.purchased = 1;
-      mechanics.recalculateGlobalDpsMultiplier();
-      expect(mockGame.state.globalDpsMultiplier).toBe(1.1);
     });
   });
 });

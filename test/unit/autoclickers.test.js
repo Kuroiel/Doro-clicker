@@ -3,9 +3,9 @@ import { CostCalculations } from "../../src/scripts/Systems/utils.js";
 
 describe("Autoclickers Data Module", () => {
   const testClickers = [
-    autoclickers.find((c) => c.id === 2),
-    autoclickers.find((c) => c.id === 4),
-    autoclickers.find((c) => c.id === 6),
+    autoclickers.find((c) => c.id === "ac_lurking_doro"),
+    autoclickers.find((c) => c.id === "ac_walkin_doro"),
+    autoclickers.find((c) => c.id === "ac_napping_siren_doro"),
   ];
 
   describe("Autoclicker Structure", () => {
@@ -13,7 +13,7 @@ describe("Autoclickers Data Module", () => {
       it(`${clicker.name} should have correct structure`, () => {
         expect(clicker).toEqual(
           expect.objectContaining({
-            id: expect.any(Number),
+            id: expect.any(String),
             name: expect.any(String),
             type: "autoclicker",
             baseCost: expect.any(Number),
@@ -32,19 +32,19 @@ describe("Autoclickers Data Module", () => {
 
   describe("effectDescription", () => {
     it("should generate a correct description string", () => {
-      const clicker = autoclickers.find((c) => c.id === 2);
+      const clicker = autoclickers.find((c) => c.id === "ac_lurking_doro");
       clicker.purchased = 5;
 
       const desc = clicker.effectDescription;
-      expect(desc).toContain(`Provides ${clicker.value} Doros per second.`);
+      expect(desc).toContain(`Provides ${clicker.value.toFixed(1)} Doros per second.`);
       expect(desc).toContain(
-        `Currently providing: ${clicker.value * 5} Doros per second.`
+        `Currently providing: ${(clicker.value * 5).toFixed(1)} Doros per second.`
       );
     });
   });
 
   describe("Cost Calculation", () => {
-    const clicker = autoclickers.find((c) => c.id === 2);
+    const clicker = autoclickers.find((c) => c.id === "ac_lurking_doro");
 
     beforeEach(() => {
       clicker.purchased = 0; // Reset before each test

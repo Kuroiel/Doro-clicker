@@ -13,7 +13,7 @@ test.describe("Upgrade System", () => {
   });
 
   test("should purchase click multiplier upgrade", async ({ page }) => {
-    const upgradeButton = page.locator('[data-id="1"]');
+    const upgradeButton = page.locator('[data-id="upg_doro_power"]');
     await expect(upgradeButton).toBeVisible();
     await expect(upgradeButton).toContainText("Cost: 10 Doros");
 
@@ -31,13 +31,13 @@ test.describe("Upgrade System", () => {
   });
 
   test("should handle upgrade visibility conditions", async ({ page }) => {
-    const motivatingDoro = page.locator('[data-id="5"]');
+    const motivatingDoro = page.locator('[data-id="upg_motivating_doro"]');
     await expect(motivatingDoro).toBeHidden();
 
     // Set up game state that meets the visibility condition.
     await page.evaluate(() => {
       const game = window.doroGame;
-      const walkin = game.autoclickers.find((a) => a.id === 4);
+      const walkin = game.autoclickers.find((a) => a.id === "ac_walkin_doro");
       walkin.purchased = 34; // This gives > 500 DPS
       game.ui.forceFullUpdate();
     });
@@ -55,7 +55,7 @@ test.describe("Upgrade System", () => {
     // Wait for the UI to reflect the change.
     await expect(page.getByText("Doros: 5")).toBeVisible();
 
-    const upgradeButton = page.locator('[data-id="1"]');
+    const upgradeButton = page.locator('[data-id="upg_doro_power"]');
     await expect(upgradeButton).toBeVisible();
     await expect(upgradeButton).toBeDisabled();
     await expect(upgradeButton).not.toHaveClass(/affordable/);

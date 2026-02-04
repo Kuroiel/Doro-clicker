@@ -5,3 +5,23 @@ coverage
 node_modules
 /blob-report/
 test-results.txt
+server.log
+gamestate_debug.txt
+test_output.txt
+unit_res.txt
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+

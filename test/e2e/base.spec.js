@@ -18,7 +18,7 @@ test.describe("Basic Game Functionality", () => {
       await expect(page.locator("#score-display")).toContainText("Doros: 0");
 
       // An arbitrary upgrade button should be disabled when the player has 0 doros.
-      const upgradeButton = page.locator('.upgrade-button[data-id="1"]');
+      const upgradeButton = page.locator('.upgrade-button[data-id="upg_doro_power"]');
       await expect(upgradeButton).toBeDisabled();
     });
 
@@ -41,7 +41,7 @@ test.describe("Basic Game Functionality", () => {
       page,
     }) => {
       await page.locator('[data-view="upgrades"]').click();
-      await page.locator('[data-id="1"]').click(); // Purchase "Doro Power" (cost 10)
+      await page.locator('[data-id="upg_doro_power"]').click(); // Purchase "Doro Power" (cost 10)
 
       const clickMultiplier = await page.evaluate(
         () => window.doroGame.mechanics.clickMultiplier
@@ -90,8 +90,8 @@ test.describe("Basic Game Functionality", () => {
       await page.locator("#close-stats").click();
       await expect(page.locator("#stats-overlay")).toBeHidden();
 
-      await page.locator('[data-id="2"]').click(); // 1 DPS
-      await page.locator('[data-id="4"]').click(); // 15 DPS
+      await page.locator('[data-id="ac_lurking_doro"]').click(); // 1 DPS
+      await page.locator('[data-id="ac_walkin_doro"]').click(); // 15 DPS
 
       await showStatsButton.click();
 
@@ -105,7 +105,7 @@ test.describe("Basic Game Functionality", () => {
     test("should allow user to reset the game via the modal", async ({
       page,
     }) => {
-      await page.locator('[data-id="2"]').click();
+      await page.locator('[data-id="ac_lurking_doro"]').click();
       await expect(page.locator("#score-display")).toContainText("Doros: 990");
 
       await page.locator("#reset-button").click();

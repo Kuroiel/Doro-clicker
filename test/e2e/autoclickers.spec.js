@@ -16,7 +16,7 @@ test.describe("Autoclicker System", () => {
         "Doros: 1,000"
       );
 
-      const autoClickerButton = page.locator('[data-id="2"]');
+      const autoClickerButton = page.locator('[data-id="ac_lurking_doro"]');
       await autoClickerButton.click();
 
       // Wait for at least one full generation interval (1.1 seconds)
@@ -30,17 +30,17 @@ test.describe("Autoclicker System", () => {
     });
 
     test("should scale autoclicker costs after purchase", async ({ page }) => {
-      const autoClickerButton = page.locator('[data-id="2"]');
+      const autoClickerButton = page.locator('[data-id="ac_lurking_doro"]');
 
       const initialCost = await page.evaluate(() => {
-        return window.doroGame.autoclickers.find((a) => a.id === 2).cost;
+        return window.doroGame.autoclickers.find((a) => a.id === "ac_lurking_doro").cost;
       });
 
       await autoClickerButton.click();
       await page.waitForTimeout(100); // Allow UI to process
 
       const newCost = await page.evaluate(() => {
-        return window.doroGame.autoclickers.find((a) => a.id === 2).cost;
+        return window.doroGame.autoclickers.find((a) => a.id === "ac_lurking_doro").cost;
       });
       expect(newCost).toBeGreaterThan(initialCost);
     });
@@ -48,8 +48,8 @@ test.describe("Autoclicker System", () => {
     test("should handle multiple different autoclicker types", async ({
       page,
     }) => {
-      await page.locator('[data-id="2"]').click();
-      await page.locator('[data-id="4"]').click();
+      await page.locator('[data-id="ac_lurking_doro"]').click();
+      await page.locator('[data-id="ac_walkin_doro"]').click();
 
       const postPurchaseDoros = await page.evaluate(
         () => window.doroGame.state.doros
@@ -69,7 +69,7 @@ test.describe("Autoclicker System", () => {
       page,
     }) => {
       await resetGameState(page, { initialDoros: 5 });
-      const lurkingDoroButton = page.locator('[data-id="2"]'); // Costs 10
+      const lurkingDoroButton = page.locator('[data-id="ac_lurking_doro"]'); // Costs 10
       await expect(lurkingDoroButton).toBeDisabled();
 
       await page.evaluate(() => {
@@ -85,7 +85,7 @@ test.describe("Autoclicker System", () => {
     test("should display a correct and informative tooltip on hover", async ({
       page,
     }) => {
-      const walkinDoroButton = page.locator('[data-id="4"]'); // Walkin Doro (15 DPS)
+      const walkinDoroButton = page.locator('[data-id="ac_walkin_doro"]'); // Walkin Doro (15 DPS)
 
       await walkinDoroButton.hover();
 
@@ -103,7 +103,7 @@ test.describe("Autoclicker System", () => {
     }) => {
       // Start with a large amount of Doros to afford multiple purchases
       await resetGameState(page, { initialDoros: 50000 });
-      const lurkingDoroButton = page.locator('[data-id="2"]');
+      const lurkingDoroButton = page.locator('[data-id="ac_lurking_doro"]');
 
       // Purchase the same autoclicker 5 times.
       for (let i = 0; i < 5; i++) {
@@ -113,7 +113,7 @@ test.describe("Autoclicker System", () => {
 
       // Verify the final state of the autoclicker.
       const ownedCount = await page.evaluate(() => {
-        return window.doroGame.autoclickers.find((a) => a.id === 2).purchased;
+        return window.doroGame.autoclickers.find((a) => a.id === "ac_lurking_doro").purchased;
       });
       expect(ownedCount).toBe(5);
 
@@ -129,11 +129,11 @@ test.describe("Autoclicker System", () => {
     }) => {
       // Start with enough Doros for a high-tier item.
       await resetGameState(page, { initialDoros: 50000 });
-      const sirenDoroButton = page.locator('[data-id="6"]'); // Napping Siren Doro (costs 1500)
+      const sirenDoroButton = page.locator('[data-id="ac_napping_siren_doro"]'); // Napping Siren Doro (costs 1500)
 
       // Get the exact cost before purchasing.
       const initialCost = await page.evaluate(() => {
-        return window.doroGame.autoclickers.find((a) => a.id === 6).cost;
+        return window.doroGame.autoclickers.find((a) => a.id === "ac_napping_siren_doro").cost;
       });
       expect(initialCost).toBe(1500);
 
@@ -152,7 +152,7 @@ test.describe("Autoclicker System", () => {
 
       // Verify the item was purchased.
       const ownedCount = await page.evaluate(() => {
-        return window.doroGame.autoclickers.find((a) => a.id === 6).purchased;
+        return window.doroGame.autoclickers.find((a) => a.id === "ac_napping_siren_doro").purchased;
       });
       expect(ownedCount).toBe(1);
     });
