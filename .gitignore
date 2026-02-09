@@ -25,3 +25,6 @@ Thumbs.db
 dist/
 build/
 
+
+# Documentation
+test/e2e/README.md

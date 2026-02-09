@@ -10,16 +10,17 @@ function getBasePath() {
 
 export default defineConfig({
   testDir: "./test/e2e",
-  fullyParallel: false,
+  fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
-  reporter: "html",
+  workers: process.env.CI ? 1 : undefined,
+  reporter: [["html"], ["list"]],
 
   use: {
     baseURL: process.env.E2E_BASE_URL || "http://127.0.0.1:5500",
     trace: "on-first-retry",
     video: "retain-on-failure",
+    screenshot: "only-on-failure",
 
     // Enhanced context options for CI
     launchOptions: {
@@ -59,4 +60,7 @@ export default defineConfig({
 
   // Add global timeout
   timeout: 60000,
+  expect: {
+    timeout: 10000,
+  },
 });

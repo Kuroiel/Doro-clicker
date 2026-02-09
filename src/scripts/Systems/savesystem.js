@@ -8,10 +8,10 @@ export class SaveSystem {
   }
 
   init() {
-    if (window.__TEST_ENV__) return; // Skip initialization during tests
-
-    this.loadGame();
-    this.setupAutoSave();
+    if (!window.__TEST_ENV__) {
+      this.loadGame();
+      this.setupAutoSave();
+    }
     this.setupResetButton();
   }
 

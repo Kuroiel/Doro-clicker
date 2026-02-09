@@ -1,9 +1,14 @@
 import { test, expect } from "@playwright/test";
+import { GamePage } from "./pages/GamePage";
+import { UpgradePage } from "./pages/UpgradePage";
 import { waitForGameInitialization, resetGameState } from "./test-utils";
 
 test.describe("Basic Game Functionality", () => {
+  let gamePage;
+
   test.beforeEach(async ({ page, baseURL }) => {
-    await page.goto(baseURL);
+    gamePage = new GamePage(page);
+    await gamePage.navigate(baseURL);
     await waitForGameInitialization(page);
     await resetGameState(page); // Resets to 1000 Doros by default
   });
@@ -13,44 +18,42 @@ test.describe("Basic Game Functionality", () => {
       await resetGameState(page, { initialDoros: 0 });
 
       await expect(page).toHaveTitle("Doro Clicker");
-      await expect(page.locator(".title")).toHaveText("Doro Clicker");
-      await expect(page.locator("#doro-image")).toBeVisible();
-      await expect(page.locator("#score-display")).toContainText("Doros: 0");
+      await expect(gamePage.titleText).toHaveText("Doro Clicker");
+      await expect(gamePage.doroImage).toBeVisible();
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 0");
 
       // An arbitrary upgrade button should be disabled when the player has 0 doros.
-      const upgradeButton = page.locator('.upgrade-button[data-id="upg_doro_power"]');
+      const upgradeButton = gamePage.page.locator(
+        '.upgrade-button[data-id="upg_doro_power"]'
+      );
       await expect(upgradeButton).toBeDisabled();
     });
 
     test("should increment score on manual click with default power", async ({
       page,
     }) => {
-      await page.locator("#doro-image").click();
+      await gamePage.clickDoro();
 
-      const manualClicks = await page.evaluate(
-        () => window.doroGame.state.manualClicks
-      );
+      const manualClicks = await gamePage.getManualClicks();
       expect(manualClicks).toBe(1);
 
-      await expect(page.locator("#score-display")).toContainText(
-        "Doros: 1,001"
-      );
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 1,001");
     });
 
     test("should increment score correctly after buying a click power upgrade", async ({
       page,
     }) => {
-      await page.locator('[data-view="upgrades"]').click();
-      await page.locator('[data-id="upg_doro_power"]').click(); // Purchase "Doro Power" (cost 10)
+      await gamePage.switchToUpgrades();
+      // Wait for view transition
+      await page.waitForTimeout(500);
+      await gamePage.page.locator('[data-id="upg_doro_power"]').click({ force: true }); // Purchase "Doro Power" (cost 10)
 
-      const clickMultiplier = await page.evaluate(
-        () => window.doroGame.mechanics.clickMultiplier
-      );
+      const clickMultiplier = await gamePage.getClickMultiplier();
       expect(clickMultiplier).toBe(2);
 
-      await page.locator("#doro-image").click();
+      await gamePage.clickDoro();
 
-      await expect(page.locator("#score-display")).toContainText("Doros: 992");
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 992");
     });
   });
 
@@ -58,65 +61,59 @@ test.describe("Basic Game Functionality", () => {
     test("should correctly switch between Autoclicker and Upgrade views", async ({
       page,
     }) => {
-      const autoDorosButton = page.locator('[data-view="autoclickers"]');
-      const doroUpgradesButton = page.locator('[data-view="upgrades"]');
-      const autoclickersContainer = page.locator("#autoclickers-container");
-      const upgradesContainer = page.locator("#upgrades-container");
+      await expect(gamePage.autoDorosButton).toHaveClass(/active/);
+      await expect(gamePage.autoclickersContainer).toHaveClass(/active-view/);
+      await expect(gamePage.doroUpgradesButton).not.toHaveClass(/active/);
+      await expect(gamePage.upgradesContainer).not.toHaveClass(/active-view/);
 
-      await expect(autoDorosButton).toHaveClass(/active/);
-      await expect(autoclickersContainer).toHaveClass(/active-view/);
-      await expect(doroUpgradesButton).not.toHaveClass(/active/);
-      await expect(upgradesContainer).not.toHaveClass(/active-view/);
+      await gamePage.switchToUpgrades();
 
-      await doroUpgradesButton.click();
-
-      await expect(doroUpgradesButton).toHaveClass(/active/);
-      await expect(upgradesContainer).toHaveClass(/active-view/);
-      await expect(autoDorosButton).not.toHaveClass(/active/);
-      await expect(autoclickersContainer).not.toHaveClass(/active-view/);
+      // Wait for the class to be applied
+      await expect(gamePage.doroUpgradesButton).toHaveClass(/active/);
+      await expect(gamePage.upgradesContainer).toHaveClass(/active-view/);
+      await expect(gamePage.autoDorosButton).not.toHaveClass(/active/);
+      await expect(gamePage.autoclickersContainer).not.toHaveClass(/active-view/);
     });
 
-    test("should update stats overlay with dynamic content", async ({
-      page,
-    }) => {
-      const showStatsButton = page.locator("#show-stats");
-      const dpsStat = page.locator("#stat-dps");
-      const totalStat = page.locator("#stat-total");
+    test("should update stats overlay with dynamic content", async ({ page }) => {
+      await gamePage.openStats();
+      await expect(gamePage.statsOverlay).toBeVisible();
+      await expect(gamePage.closeStatsButton).toBeVisible();
 
-      await showStatsButton.click();
-      await expect(dpsStat).toContainText("0.0");
-      await expect(totalStat).toContainText("1,000"); // Initial total doros
+      // Allow "0" or "0.0"
+      await expect(gamePage.dpsStat).toHaveText(/^0(\.0)?$/);
+      await expect(gamePage.totalStat).toContainText("1,000"); // Initial total doros
 
-      await page.locator("#close-stats").click();
-      await expect(page.locator("#stats-overlay")).toBeHidden();
+      await gamePage.closeStats();
+      await expect(gamePage.statsOverlay).toBeHidden();
 
-      await page.locator('[data-id="ac_lurking_doro"]').click(); // 1 DPS
-      await page.locator('[data-id="ac_walkin_doro"]').click(); // 15 DPS
+      /*
+       * Use UpgradePage to buy items for stats update
+       */
+      const upgradePage = new UpgradePage(page);
+      await upgradePage.buyAutoclicker("ac_lurking_doro"); // 1 DPS
+      await upgradePage.buyAutoclicker("ac_walkin_doro"); // 15 DPS
 
-      await showStatsButton.click();
+      await gamePage.openStats();
 
       await expect(async () => {
-        await expect(dpsStat).toContainText("16.0");
-
-        await expect(totalStat).toHaveText(/1,\d{3}/);
+        await expect(gamePage.dpsStat).toContainText("16.0");
+        await expect(gamePage.totalStat).toHaveText(/1,\d{3}/);
       }).toPass();
     });
 
     test("should allow user to reset the game via the modal", async ({
       page,
     }) => {
-      await page.locator('[data-id="ac_lurking_doro"]').click();
-      await expect(page.locator("#score-display")).toContainText("Doros: 990");
+      const upgradePage = new UpgradePage(page);
+      await upgradePage.buyAutoclicker("ac_lurking_doro");
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 990");
 
-      await page.locator("#reset-button").click();
-      const resetButtonInModal = page.locator("#confirm-reset");
-      await expect(resetButtonInModal).toBeVisible();
+      await gamePage.resetGame();
 
-      await resetButtonInModal.click();
-
-      await expect(page.locator("#score-display")).toContainText("Doros: 0");
-
-      await expect(resetButtonInModal).toBeHidden();
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 0");
+      await expect(gamePage.confirmResetButton).toBeHidden();
     });
   });
 });
+

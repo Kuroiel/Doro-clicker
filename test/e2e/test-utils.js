@@ -8,21 +8,28 @@ export async function waitForGameInitialization(
   page,
   timeout = process.env.CI ? 5000 : 3000
 ) {
-  const currentURL = await page.url();
-  if (!currentURL.includes(getTestPath())) {
-    await page.goto(getTestPath());
-  }
-
-  // Set test flag and disable saving
+  // Always set test flag and disable saving BEFORE navigation or on reload
   await page.addInitScript(() => {
     window.__TEST_ENV__ = true;
   });
+
+  // Force a reload or navigate to ensure the init script takes effect
+  const currentURL = await page.url();
+  const targetURL = getTestPath();
+  
+  if (!currentURL.includes(targetURL)) {
+    await page.goto(targetURL);
+  } else {
+    await page.reload();
+  }
+
+  // Ensure save system is disabled even after load
   await disableSaveSystem(page);
 
   // Core checks with explicit timeout
-  await expect(page).toHaveTitle("Doro Clicker", { timeout: 3000 });
-  await expect(page.locator("#doro-image")).toBeVisible({ timeout: 3000 });
-  await page.waitForFunction(() => window.doroGame?.state, { timeout: 3000 });
+  await expect(page).toHaveTitle("Doro Clicker", { timeout });
+  await expect(page.locator("#doro-image")).toBeVisible({ timeout });
+  await page.waitForFunction(() => window.doroGame?.state, { timeout });
 }
 
 export async function resetGameState(page, { initialDoros = 1000 } = {}) {
@@ -34,12 +41,16 @@ export async function resetGameState(page, { initialDoros = 1000 } = {}) {
 
   // After resetting to a clean slate, set the specific doros count for the test.
   if (initialDoros !== 0) {
-    await page.evaluate((doros) => {
+    await page.evaluate(async (doros) => {
       const game = window.doroGame;
       game.state.doros = doros;
       game.state.totalDoros = doros;
       // Manually notify the UI that the state has changed.
       game.state.notify();
+      
+      // Since UI updates are using requestAnimationFrame, we should wait for at least one frame
+      // to ensure the UI has a chance to reflect the changes.
+      await new Promise(resolve => requestAnimationFrame(resolve));
     }, initialDoros);
   }
 
