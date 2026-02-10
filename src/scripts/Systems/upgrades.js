@@ -31,12 +31,12 @@ class Upgrade {
   }
 
   isVisible(gameState) {
-    // Hide if we've reached max purchases
+    // hide if bought out
     if (this.purchased >= this.maxPurchases) {
       return false;
     }
 
-    // Check prerequisite upgrade
+    // dependencies... bane of my existence
     if (this.prerequisiteUpgradeId) {
       const prereq = gameState.upgrades.find(
         (u) => u.id === this.prerequisiteUpgradeId
@@ -46,7 +46,7 @@ class Upgrade {
       }
     }
 
-    // Check all other visibility conditions
+    // check other stuff
     return this.visibilityConditions.every((condition) => {
       switch (condition.type) {
         case "MIN_AUTOCLICKER_LEVEL":
@@ -95,6 +95,7 @@ class StrengtheningUpgrade extends Upgrade {
       ac.template.rampUpThreshold,
       ac.template.rampUpGrowth
     );
+    // senior management decided 5x is a good multiplier. sure.
     return Math.round(nextAcCost * 5);
   }
 
@@ -105,9 +106,7 @@ class StrengtheningUpgrade extends Upgrade {
   }
 }
 
-/**
- * Metadata for specific milestones for better flavor text and icons
- */
+// flavor stuff
 const UPGRADE_METADATA = {
   ac_lurking_doro: {
     10: {
@@ -158,6 +157,7 @@ const STATIC_UPGRADES = [
   }),
 ];
 
+// nobody asked for this but here it is
 function toRoman(num) {
   const map = {
     M: 1000,
@@ -184,6 +184,7 @@ function toRoman(num) {
   return result;
 }
 
+// factory of doom
 function generateStrengtheningUpgrades(autoclickers) {
   const dynamicUpgrades = [];
   const bonusTable = {
@@ -199,7 +200,7 @@ function generateStrengtheningUpgrades(autoclickers) {
   autoclickers.forEach((ac) => {
     let levelCounter = 1;
 
-    // Generate milestone upgrades
+    // big upgrades
     ac.template.milestones.forEach(([threshold]) => {
       let bonus = bonusTable[threshold] || 1.0;
       if (ac.id === "ac_napping_siren_doro") {
@@ -228,7 +229,7 @@ function generateStrengtheningUpgrades(autoclickers) {
       );
     });
 
-    // Generate 10x milestones (10k, 100k, etc.)
+    // mega upgrades
     const extraMilestones = [10000, 100000, 1000000];
     extraMilestones.forEach((threshold) => {
       let bonus = 1.0;
@@ -258,10 +259,10 @@ function generateStrengtheningUpgrades(autoclickers) {
   return dynamicUpgrades;
 }
 
-// We need to import autoclickers to generate these
+// import stuff here to avoid circles maybe
 import { autoclickers } from "./autoclickers.js";
 
-// Instantiate and export upgrades directly
+// all the upgrades
 export const upgrades = [
   ...STATIC_UPGRADES,
   ...generateStrengtheningUpgrades(autoclickers),

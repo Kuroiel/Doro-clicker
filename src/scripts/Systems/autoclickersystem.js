@@ -18,8 +18,8 @@ export class AutoclickerSystem {
       try {
         const dps = this.game.state.getTotalDPS();
         if (dps > 0) {
-          // This check is slightly simplified for clarity
-          this.game.state.addAutoDoros(dps / 10); // Add Doros based on DPS
+          // add the doros
+          this.game.state.addAutoDoros(dps / 10);
 
           this.game.ui.updateScoreDisplay();
           this.game.ui.updateAllAffordability();

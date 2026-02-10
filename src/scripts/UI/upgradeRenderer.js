@@ -1,12 +1,6 @@
-/**
- * Utility class for rendering upgrade UI elements
- */
+// drawing upgrades
 export class UpgradeRenderer {
-  /**
-   * Renders the first line of an upgrade button
-   * @param {Object} upgrade - The upgrade object
-   * @returns {string} HTML string for the first line
-   */
+  // first bit
   static renderFirstLine(upgrade, formatter) {
     if (!upgrade.icon) return `<span>${upgrade.name}</span>`;
 
@@ -18,12 +12,7 @@ export class UpgradeRenderer {
         `;
   }
 
-  /**
-   * Renders the second line of an upgrade button
-   * @param {Object} upgrade - The upgrade object
-   * @param {Function} [formatter] - Optional number formatting function
-   * @returns {string} HTML string for the second line
-   */
+  // second bit
   static renderSecondLine(upgrade, formatter) {
     const cost = upgrade.cost;
 
@@ -37,7 +26,7 @@ export class UpgradeRenderer {
         </div>
     `;
   }
-  // Fallback formatting when no formatter provided
+  // fallback if no formatter
   static fallbackFormat(num, decimals) {
     if (typeof num !== "number" || isNaN(num)) {
       console.warn("Invalid number passed to fallbackFormat:", num);
@@ -53,12 +42,7 @@ export class UpgradeRenderer {
     return parts.join(".");
   }
 
-  /**
-   * Renders the tooltip for an upgrade
-   * @param {Object} upgrade - The upgrade object
-   * @param {Function} [formatter] - Optional number formatting function
-   * @returns {string} HTML string for the tooltip
-   */
+  // popup info
   static renderTooltip(upgrade, formatter) {
     if (!upgrade.description || !upgrade.effectDescription) return "";
 
@@ -86,12 +70,7 @@ export class UpgradeRenderer {
     `;
   }
 
-  /**
-   * Renders a complete upgrade button
-   * @param {Object} upgrade - The upgrade object
-   * @param {boolean} canAfford - Whether the player can afford the upgrade
-   * @returns {string} HTML string for the complete button
-   */
+  // the whole button
   static renderUpgradeButton(upgrade, canAfford, formatter) {
     return `
         <button 

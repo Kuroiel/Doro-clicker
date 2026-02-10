@@ -1,21 +1,12 @@
 export class DOMHelper {
-  // ======================
-  // Score Related Methods
-  // ======================
+  // score stuff
 
-  /**
-   * Gets the score display element
-   * @returns {HTMLElement} The score display element
-   */
+  // hunting for the score
   static getScoreElement() {
     return document.getElementById("score-display");
   }
 
-  /**
-   * Gets the numeric Doros count from the score display.
-   * IMPROVED: Handles numbers with commas.
-   * @returns {number} Current Doros count (0 if not found/parse fails)
-   */
+  // get the doro number
   static getDorosCount() {
     try {
       const scoreElement = this.getScoreElement();
@@ -28,9 +19,7 @@ export class DOMHelper {
     }
   }
 
-  // ========================
-  // Upgrade Related Methods
-  // ========================
+  // upgrades stuff
 
   static getUpgradesContainer() {
     return document.getElementById("upgrades-container");
@@ -48,9 +37,7 @@ export class DOMHelper {
     return Array.from(document.querySelectorAll(".upgrade-view"));
   }
 
-  // =====================
-  // Stats Related Methods
-  // =====================
+  // stats stuff
 
   static getStatsElement() {
     return document.getElementById("stats-overlay");
@@ -74,17 +61,13 @@ export class DOMHelper {
     return document.getElementById("close-stats");
   }
 
-  // ========================
-  // Autoclicker Related Methods
-  // ========================
+  // auto clickers stuff
 
   static getAutoclickersContainer() {
     return document.getElementById("autoclickers-container");
   }
 
-  // ===================
-  // UI Element Methods
-  // ===================
+  // generic ui stuff
 
   static getDoroImage() {
     return document.getElementById("doro-image");
@@ -98,9 +81,7 @@ export class DOMHelper {
     return Array.from(document.querySelectorAll(".view-button"));
   }
 
-  // ===================
-  // Utility Methods
-  // ===================
+  // bits and bobs
 
   static setText(element, text) {
     if (element && element.textContent !== text) {
@@ -118,11 +99,8 @@ export class DOMHelper {
     }
   }
 
-  /**
-   * Replaces an element with new HTML content
-   * @param {HTMLElement} oldElement - The element to replace
-   * @param {string} newHTML - The HTML string to replace with
-   */
+  // swap tags
+  // swapping bits
   static replaceElement(oldElement, newHTML) {
     if (!oldElement) return;
     const template = document.createElement("template");
@@ -133,9 +111,7 @@ export class DOMHelper {
     }
   }
 
-  // ======================
-  // Reset UI Methods
-  // ======================
+  // reset ui stuff
 
   static createResetModal() {
     const modal = document.createElement("div");

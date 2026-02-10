@@ -78,11 +78,11 @@ class Autoclicker {
     this.modifiers = config.modifiers || [];
   }
 
-  // Value is now dynamic based on modifiers AND milestones
+  // figure out dps based on stuff bought
   get value() {
     let currentBase = this.baseDPS;
 
-    // Apply milestone DPS jumps
+    // check milestones
     const milestonesReached = this.template.milestones.filter(
       ([threshold]) => this.purchased >= threshold
     ).length;
@@ -122,13 +122,13 @@ class Autoclicker {
     );
   }
 }
-// Instantiate and export autoclickers directly
+// actual clickers
 export const autoclickers = [
   new Autoclicker({
     id: "ac_lurking_doro",
     name: "Lurking Doro",
-    baseCost: 5, // Lower starting base price
-    baseDPS: 0.1, // Low base amount of doros per second
+    baseCost: 5, // cheap
+    baseDPS: 0.1, // weak
     icon: "./src/assets/dorocreep.webp",
     description: "Cause Ima creep Ima Doro.",
     template: "BASIC",
@@ -149,7 +149,7 @@ export const autoclickers = [
     baseDPS: 69,
     icon: "./src/assets/SirenDoroSleep.webp",
     description: "Bubble is working hard to give Siren a break.",
-    template: "SIREN", // Weakest cost scaling
+    template: "SIREN", // scales weirdly
   }),
   new Autoclicker({
     id: "ac_comfy_doro",

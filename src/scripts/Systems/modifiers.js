@@ -1,16 +1,11 @@
-/**
- * Handles all mathematical modifiers for the game.
- * Centralizes the calculation of bonuses to avoid scattered logic.
- */
+// math stuff for bonuses
 export class ModifierSystem {
   constructor(game) {
     this.game = game;
     this.modifiers = new Map();
   }
 
-  /**
-   * Recalculates all active modifiers based on purchased items.
-   */
+  // redo all the math
   recalculate() {
     this.modifiers.clear();
 
@@ -25,48 +20,37 @@ export class ModifierSystem {
     });
   }
 
-  /**
-   * Adds a modifier to the system.
-   * @param {Object} mod - The modifier definition
-   * @param {number} purchasedCount - How many times the source was purchased
-   */
+  // recalibrating the universe
   addModifier(mod, purchasedCount) {
     const key = `${mod.target}:${mod.type}`;
     const current = this.modifiers.get(key) || { multiplier: 1, add: 0 };
 
     if (mod.action === "multiply") {
-      // Multiplicative modifiers: result = base * (value ^ count)
+      // result = base * (value ^ count)
       current.multiplier *= Math.pow(mod.value, purchasedCount);
     } else if (mod.action === "addMultiplier") {
-      // Additive multiplier bonuses: result = base * (multiplier + value * count)
+      // result = base * (multiplier + value * count)
       current.multiplier += mod.value * purchasedCount;
     } else if (mod.action === "add") {
-      // Additive modifiers: result = base + (value * count)
+      // result = base + (value * count)
       current.add += mod.value * purchasedCount;
     }
 
     this.modifiers.set(key, current);
   }
 
-  /**
-   * Gets the total multiplier for a specific target and type.
-   */
+  // helpers
   getMultiplier(target, type) {
     const mod = this.modifiers.get(`${target}:${type}`);
     return mod ? mod.multiplier : 1;
   }
 
-  /**
-   * Gets the total additive bonus for a specific target and type.
-   */
   getAdd(target, type) {
     const mod = this.modifiers.get(`${target}:${type}`);
     return mod ? mod.add : 0;
   }
 
-  /**
-   * Applies modifiers to a base value.
-   */
+  // the moment of truth
   apply(baseValue, target, type) {
     const mod = this.modifiers.get(`${target}:${type}`);
     if (!mod) return baseValue;

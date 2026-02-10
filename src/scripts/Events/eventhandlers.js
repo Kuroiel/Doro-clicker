@@ -6,6 +6,7 @@ export class EventHandlers {
     this._listeners = [];
   }
 
+  // wiring up the disaster
   setupAllEventListeners() {
     this.setupDoroImageListeners();
     this.setupUpgradeButtonListeners();
@@ -21,7 +22,7 @@ export class EventHandlers {
       doroImage.removeEventListener("click", this._doroClickHandler);
     }
 
-    // Create and add new click handler
+    // redo clicker
     this._doroClickHandler = (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -29,7 +30,7 @@ export class EventHandlers {
     };
     this._addListener(doroImage, "click", this._doroClickHandler);
 
-    // Visual feedback handlers
+    // scale feedback
     this._addListener(doroImage, "mousedown", () => {
       doroImage.style.transform = "scale(0.95)";
     });
@@ -51,7 +52,7 @@ export class EventHandlers {
           button.classList.add("processing");
           const purchased = this.game.mechanics.purchaseUpgrade(upgradeId);
           if (purchased) {
-            // Visual feedback for successful purchase
+            // flash effect
             button.classList.add("purchased");
             setTimeout(() => button.classList.remove("purchased"), 100);
           }
@@ -79,7 +80,7 @@ export class EventHandlers {
     this._addListener(document.body, "click", (e) => {
       const target = e.target;
 
-      // Handle showing the stats
+      // show stats
       if (target.closest("#show-stats")) {
         e.stopPropagation();
         statsElement.style.display =
@@ -87,23 +88,23 @@ export class EventHandlers {
         return; // Stop further processing
       }
 
-      // Handle closing the stats
+      // hide stats
       if (target.closest("#close-stats")) {
         e.stopPropagation();
         statsElement.style.display = "none";
         return; // Stop further processing
       }
 
-      // Handle clicking outside the stats overlay to close it
       if (
         statsElement.style.display === "block" &&
-        !target.closest("#stats-overlay") // Check if the click was outside the overlay
+        !target.closest("#stats-overlay") // click outside close
       ) {
         statsElement.style.display = "none";
       }
     });
   }
 
+  // adding to the pile
   _addListener(element, event, handler) {
     element.addEventListener(event, handler);
     this._listeners.push({ element, event, handler });

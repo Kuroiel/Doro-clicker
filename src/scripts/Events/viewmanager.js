@@ -15,7 +15,7 @@ export class ViewManager {
 
     this.currentView = view;
 
-    // Add defensive checks for DOMHelper methods
+    // dom check
     if (typeof DOMHelper.getViewButtons === "function") {
       this._updateViewButtons();
     }

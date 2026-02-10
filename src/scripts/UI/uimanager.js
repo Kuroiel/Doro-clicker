@@ -43,7 +43,7 @@ export class UIManager {
 
   updateStatsDisplay() {
     const stats = DOMHelper.getStatElements();
-    if (!stats) return;
+    if (!stats) return; // nothing to show
 
     const clicks = this.formatter.formatNumber(this.game.state.manualClicks, 0);
     const total = this.formatter.formatNumber(
@@ -58,7 +58,7 @@ export class UIManager {
     DOMHelper.setText(stats.total, total);
   }
 
-  // Renders all items from scratch. Should only be called on init, load, or view switch.
+  // redraw everything from zero
   renderAllItems() {
     const autoContainer = DOMHelper.getAutoclickersContainer();
     const upgradeContainer = DOMHelper.getUpgradesContainer();
@@ -79,7 +79,7 @@ export class UIManager {
         );
       });
 
-    // Render upgrades based on visibility
+    // show what they can see
     const { visibleUpgrades } = this.sortUpgrades();
     visibleUpgrades
       .filter((item) => item.type !== "autoclicker")
@@ -90,12 +90,12 @@ export class UIManager {
         );
       });
 
-    // After rendering, immediately check for what can be afforded.
+    // see if they can buy anything now
     this.updateAllAffordability();
     this._needsFullRender = false;
   }
 
-  // Public method to trigger a full redraw.
+  // do it all again
   forceFullUpdate() {
     this._needsFullRender = true;
     this.renderAllItems();
@@ -104,7 +104,7 @@ export class UIManager {
 
   sortUpgrades() {
     const visibleUpgrades = [];
-    const hiddenUpgrades = []; // Can be used for a "purchased upgrades" view later
+    const hiddenUpgrades = []; // for later i guess
     const gameStateContext = {
       autoclickers: this.game.autoclickers,
       getTotalDPS: () => this.game.state.getTotalDPS(),
@@ -132,7 +132,7 @@ export class UIManager {
       this.game.upgrades.find((u) => u.id === upgradeId);
     if (!item) return;
 
-    // Check if an autoclicker purchase just hit a milestone that might unlock upgrades
+    // check if we unlocked something
     if (item.type === "autoclicker") {
       const isMilestone = item.template.milestones.some(
         ([threshold]) => item.purchased === threshold
@@ -151,7 +151,7 @@ export class UIManager {
     const formatter = (num, decimals = 0) =>
       this.formatter.formatNumber(num, decimals, null, decimals === 0, "cost");
 
-    // Update cost text
+    // redo cost
     const costSpan = button.querySelector(
       ".upgrade-second-line > span:first-child"
     );
@@ -159,7 +159,7 @@ export class UIManager {
       costSpan.textContent = `Cost: ${formatter(item.cost)} Doros`;
     }
 
-    // Update owned text (for autoclickers)
+    // redo owned count
     if (item.type === "autoclicker") {
       const ownedSpan = button.querySelector(
         ".upgrade-second-line span:last-child"
@@ -167,14 +167,14 @@ export class UIManager {
       if (ownedSpan) ownedSpan.textContent = `(Owned: ${item.purchased})`;
     }
 
-    // Update tooltip content
+    // redo tooltip
     const oldTooltip = button.querySelector(".upgrade-tooltip");
     if (oldTooltip) {
       const newTooltipHTML = UpgradeRenderer.renderTooltip(item, formatter);
       DOMHelper.replaceElement(oldTooltip, newTooltipHTML);
     }
 
-    // If an upgrade is no longer visible after purchase (e.g., maxed out), re-render.
+    // if it's gone just redraw
     const gameStateContext = {
       autoclickers: this.game.autoclickers,
       getTotalDPS: () => this.game.state.getTotalDPS(),

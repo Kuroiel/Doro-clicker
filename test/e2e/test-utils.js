@@ -4,16 +4,17 @@ function getTestPath() {
   return process.env.CI ? "/Doro-clicker/" : "/";
 }
 
+// waiting for the house of cards to stand up
 export async function waitForGameInitialization(
   page,
   timeout = process.env.CI ? 5000 : 3000
 ) {
-  // Always set test flag and disable saving BEFORE navigation or on reload
+  // no saving allowed
   await page.addInitScript(() => {
     window.__TEST_ENV__ = true;
   });
 
-  // Force a reload or navigate to ensure the init script takes effect
+  // refresh
   const currentURL = await page.url();
   const targetURL = getTestPath();
   
@@ -23,15 +24,16 @@ export async function waitForGameInitialization(
     await page.reload();
   }
 
-  // Ensure save system is disabled even after load
+  // no saves
   await disableSaveSystem(page);
 
-  // Core checks with explicit timeout
+  // basic checks
   await expect(page).toHaveTitle("Doro Clicker", { timeout });
   await expect(page.locator("#doro-image")).toBeVisible({ timeout });
   await page.waitForFunction(() => window.doroGame?.state, { timeout });
 }
 
+// turning it off and on again
 export async function resetGameState(page, { initialDoros = 1000 } = {}) {
   await page.evaluate(() => {
     if (window.doroGame?.saveSystem) {
@@ -39,22 +41,20 @@ export async function resetGameState(page, { initialDoros = 1000 } = {}) {
     }
   });
 
-  // After resetting to a clean slate, set the specific doros count for the test.
+  // set the numbers
   if (initialDoros !== 0) {
     await page.evaluate(async (doros) => {
       const game = window.doroGame;
       game.state.doros = doros;
       game.state.totalDoros = doros;
-      // Manually notify the UI that the state has changed.
-      game.state.notify();
+      game.state.notify(); // tell ui
       
-      // Since UI updates are using requestAnimationFrame, we should wait for at least one frame
-      // to ensure the UI has a chance to reflect the changes.
+      // wait a frame
       await new Promise(resolve => requestAnimationFrame(resolve));
     }, initialDoros);
   }
 
-  // Verify the state was set correctly and the UI has updated.
+  // check if it worked
   await expect(async () => {
     const displayedText = await page.locator("#score-display").textContent();
     const displayedNumber = parseInt(displayedText.replace(/[^0-9]/g, ""));
@@ -65,11 +65,11 @@ export async function resetGameState(page, { initialDoros = 1000 } = {}) {
 export async function disableSaveSystem(page) {
   await page.evaluate(() => {
     if (window.doroGame?.saveSystem) {
-      // Disable auto-saving
+      // stop auto save
       if (window.doroGame.saveSystem.saveInterval) {
         clearInterval(window.doroGame.saveSystem.saveInterval);
       }
-      // Prevent any saves or loads during tests
+      // kill saves
       window.doroGame.saveSystem.saveGame = () => {};
       window.doroGame.saveSystem.loadGame = () => {};
     }

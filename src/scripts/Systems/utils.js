@@ -1,5 +1,5 @@
 export const CostCalculations = {
-  // Standard exponential cost growth with decade jumps
+  // price math
   standardCost: (
     baseCost,
     purchased,
@@ -15,24 +15,23 @@ export const CostCalculations = {
 
     let cost = baseCost;
 
-    // Scaling for in-between numbers
+    // scaling stuff
     if (purchased <= rampUpThreshold) {
       cost *= Math.pow(baseGrowth, purchased);
     } else {
-      // Scale normally up to threshold, then use higher growth
+      // price goes up fast here
       cost *= Math.pow(baseGrowth, rampUpThreshold);
       cost *= Math.pow(rampUpGrowth, purchased - rampUpThreshold);
     }
 
-    // Apply milestone multipliers (jumps in price)
+    // big jumps
     for (const [threshold, multiplier] of milestones) {
       if (purchased >= threshold) cost *= multiplier;
     }
 
-    // Ensure cost always increases by at least 1
+    // make sure it actually costs more
     if (purchased > 0) {
-      // Recursive call for simplicity to get prev cost, or just reuse logic
-      // But let's avoid recursion for performance in loops
+      // loop is better than recursion i guess
       let prevCost = baseCost;
       const prevPurchased = purchased - 1;
       if (prevPurchased <= rampUpThreshold) {
@@ -51,11 +50,11 @@ export const CostCalculations = {
     return Math.round(cost);
   },
 
-  // Simple exponential cost
+  // simple price math
   simpleExponential: (baseCost, purchased, growthRate = 10) => {
     return Math.round(baseCost * Math.pow(growthRate, purchased));
   },
 
-  // Flat cost (for upgrades that don't change price)
+  // fixed price
   flatCost: (baseCost) => baseCost,
 };

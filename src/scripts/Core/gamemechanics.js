@@ -28,10 +28,10 @@ export class GameMechanics {
       this.game.state.doros -= cost;
       item.purchased += 1;
 
-      // New data-driven approach: just recalculate modifiers
+      // fix numbers after buying
       this.game.modifierSystem.recalculate();
 
-      // Recalculate DPS if needed
+      // update dps too
       this.game.autoclickerSystem.recalculateDPS();
 
       this.game.state.notify();
@@ -43,21 +43,21 @@ export class GameMechanics {
     }
   }
 
-  // These methods are now mostly redundant or simplified
+  // old stuff that might still be used maybe?
   recalculateClickMultiplier() {
-    // Redundant now, but kept for compatibility if needed
+    // dont think we need this
   }
 
   applyUpgrade(upgrade) {
-    // Redundant now as purchaseUpgrade handles it via modifierSystem.recalculate()
+    // buy logic handles this now i hope
   }
 
   recalculateDpsForAutoclicker(autoclickerId) {
-    // Redundant now
+    // trash
   }
 
   recalculateGlobalDpsMultiplier() {
-    // Redundant now
+    // also trash
   }
 
   canAfford(item) {

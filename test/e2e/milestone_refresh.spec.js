@@ -10,39 +10,39 @@ test.describe('Milestone Refresh E2E', () => {
     gamePage = new GamePage(page);
     await gamePage.navigate(baseURL);
     await waitForGameInitialization(page);
-    await resetGameState(page); // Resets to 1000 Doros by default
+    await resetGameState(page); // start with 1000
   });
 
   test('should show Lurking Doro Upgrade I after buying 10 Lurking Doros', async ({ page }) => {
-    // Wait for game to be ready
+    // game ready?
     await page.waitForFunction(() => window.doroGame && window.doroGame.state && window.doroGame.ui);
 
-    // 1. Check that "Lurking Doro Upgrade I" is NOT visible initially
+    // 1. check it's hidden
     await page.click('button[data-view="upgrades"]');
     const upgradeSelector = '.upgrade-button:has-text("Lurking Doro Upgrade I")';
     await expect(page.locator(upgradeSelector)).not.toBeVisible();
 
-    // 2. Buy 10 Lurking Doros
+    // 2. buy 10
     await page.click('button[data-view="autoclickers"]');
     
-    // Cheat a bit to get enough doros
+    // cheat for cash
     await page.evaluate(() => {
       window.doroGame.state.doros = 1000000;
       window.doroGame.state.notify();
     });
 
     const buyButton = page.locator('#autoclickers-container .upgrade-button:has-text("Lurking Doro")');
-    // Ensure the button is enabled after cheating
+    // check if we can click
     await expect(buyButton).toBeEnabled({ timeout: 10000 });
 
     for (let i = 0; i < 10; i++) {
         await buyButton.click();
     }
 
-    // 3. Switch to upgrades view and check visibility
+    // 3. check visibility
     await page.click('button[data-view="upgrades"]');
     
-    // Wait for the specific upgrade to appear
+    // wait for it
     await page.waitForSelector(upgradeSelector, { state: 'visible', timeout: 5000 });
     const upgrade = page.locator(upgradeSelector);
     await expect(upgrade).toBeVisible();

@@ -15,6 +15,7 @@ export class SaveSystem {
     this.setupResetButton();
   }
 
+  // hope the disk doesn't die
   saveGame() {
     try {
       const saveData = {
@@ -34,26 +35,27 @@ export class SaveSystem {
     }
   }
 
+  // fingers crossed
   loadGame() {
     try {
       const saveData = JSON.parse(localStorage.getItem("doroClickerSave"));
       
-      // ALWAYS reset purchased counts first to avoid leakage from previous sessions
+      // clean up before loading
       this.game.autoclickers.forEach(a => a.purchased = 0);
       this.game.upgrades.forEach(u => u.purchased = 0);
 
       if (!saveData) {
-        // If no save data, do an initial UI render and exit
+        // no save, just show what we got
         this.game.modifierSystem.recalculate();
         this.game.autoclickerSystem.recalculateDPS();
         this.game.ui.renderAllItems();
         return;
       }
 
-      // Load base state data
+      // load saved crap
       this.game.state.deserialize(saveData.state);
 
-      // Load purchased counts for autoclickers
+      // load clickers
       saveData.autoclickers?.forEach((savedClicker) => {
         const clicker = this.game.autoclickers.find(
           (a) => a.id === savedClicker.id,
@@ -61,7 +63,7 @@ export class SaveSystem {
         if (clicker) clicker.purchased = savedClicker.purchased || 0;
       });
 
-      // Load purchased counts for upgrades
+      // load upgrades
       saveData.upgrades?.forEach((savedUpgrade) => {
         const upgrade = this.game.upgrades.find(
           (u) => u.id === savedUpgrade.id,
@@ -71,18 +73,19 @@ export class SaveSystem {
         }
       });
 
-      // Recalculate everything based on loaded data
+      // fix the numbers
       this.game.modifierSystem.recalculate();
       this.game.autoclickerSystem.recalculateDPS();
 
       this.game.ui.forceFullUpdate();
     } catch (error) {
       console.error("Failed to load game:", error);
-      // Fallback to a clean state if loading fails
+      // if it breaks just reset
       this.resetGame();
     }
   }
 
+  // nuke it from orbit
   resetGame() {
     // Reset all state and purchase counts
     localStorage.removeItem("doroClickerSave");
@@ -109,7 +112,7 @@ export class SaveSystem {
 
   setupResetButton() {
     const existingButton = DOMHelper.getResetButton();
-    if (existingButton) return; // Already setup
+    if (existingButton) return; // done already
 
     const resetBtn = document.createElement("button");
     resetBtn.id = "reset-button";

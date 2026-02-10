@@ -11,7 +11,7 @@ import { ModifierSystem } from "../Systems/modifiers.js";
 
 class DoroClicker {
   constructor() {
-    // Initialize core systems
+    // setup systems
     this.state = new GameState();
     this.modifierSystem = new ModifierSystem(this);
     this.viewManager = new ViewManager(this);
@@ -21,12 +21,12 @@ class DoroClicker {
     this.events = new EventHandlers(this);
     this.saveSystem = new SaveSystem(this);
 
-    // Initialize game data
+    // load data
     this.autoclickers = autoclickers;
     this.upgrades = upgrades;
     this.state.setAutoclickers(this.autoclickers);
 
-    // Initialize game
+    // start it up
     this.init();
   }
 

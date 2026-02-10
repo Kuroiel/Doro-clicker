@@ -25,7 +25,7 @@ export class GameState {
       return;
     }
 
-    // Use full precision for internal state to avoid losing progress at low DPS
+    // avoid precision bugs
     this.doros += dpsAmount;
     this.totalAutoDoros += dpsAmount;
     this.totalDoros += dpsAmount;
@@ -81,10 +81,7 @@ export class GameState {
   // Save/Load Methods
   // ======================
 
-  /**
-   * Serializes game state for saving
-   * @returns {Object} Serializable game state
-   */
+  // transform to object for saves
   serialize() {
     return {
       doros: this.doros,
@@ -95,10 +92,7 @@ export class GameState {
     };
   }
 
-  /**
-   * Loads game state from serialized data
-   * @param {Object} data - Serialized game state
-   */
+  // load from object
   deserialize(data) {
     if (!data) return;
 
@@ -115,9 +109,7 @@ export class GameState {
     this.totalDoros = safeNumber(data.totalDoros, 0);
   }
 
-  /**
-   * Resets game to initial state
-   */
+  // bye bye progress
   reset() {
     this.doros = 0;
     this.manualClicks = 0;

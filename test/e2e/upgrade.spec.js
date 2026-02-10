@@ -26,13 +26,13 @@ test.describe("Upgrade System", () => {
 
     await upgradePage.buyUpgrade("upg_doro_power");
 
-    // Verify the game state was updated correctly.
+    // check state
     await expect(async () => {
       const clickMultiplier = await gamePage.getClickMultiplier();
       expect(clickMultiplier).toBe(2);
     }).toPass();
 
-    // Verify the UI updated to show the new cost.
+    // check cost change
     await expect(upgradeButton).toContainText(/Cost: 100 Doros/);
   });
 
@@ -40,11 +40,11 @@ test.describe("Upgrade System", () => {
     const motivatingDoro = upgradePage.getUpgradeButton("upg_motivating_doro");
     await expect(motivatingDoro).toBeHidden();
 
-    // Set up game state that meets the visibility condition.
+    // set viewable state
     await page.evaluate(() => {
       const game = window.doroGame;
       const walkin = game.autoclickers.find((a) => a.id === "ac_walkin_doro");
-      walkin.purchased = 34; // This gives > 500 DPS
+      walkin.purchased = 34; // dps > 500
       game.ui.forceFullUpdate();
     });
 
@@ -52,10 +52,10 @@ test.describe("Upgrade System", () => {
   });
 
   test("should prevent unaffordable purchases", async ({ page }) => {
-    // Set the game state to have very few doros.
+    // broke mode
     await resetGameState(page, { initialDoros: 5 });
 
-    // Wait for the UI to reflect the change.
+    // wait for ui
     await expect(gamePage.scoreDisplay).toContainText("Doros: 5");
 
     const upgradeButton = upgradePage.getUpgradeButton("upg_doro_power");

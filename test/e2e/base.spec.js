@@ -22,7 +22,7 @@ test.describe("Basic Game Functionality", () => {
       await expect(gamePage.doroImage).toBeVisible();
       await expect(gamePage.scoreDisplay).toContainText("Doros: 0");
 
-      // An arbitrary upgrade button should be disabled when the player has 0 doros.
+      // should be disabled
       const upgradeButton = gamePage.page.locator(
         '.upgrade-button[data-id="upg_doro_power"]'
       );
@@ -44,7 +44,7 @@ test.describe("Basic Game Functionality", () => {
       page,
     }) => {
       await gamePage.switchToUpgrades();
-      // Wait for view transition
+      // wait a sec
       await page.waitForTimeout(500);
       await gamePage.page.locator('[data-id="upg_doro_power"]').click({ force: true }); // Purchase "Doro Power" (cost 10)
 
@@ -68,7 +68,7 @@ test.describe("Basic Game Functionality", () => {
 
       await gamePage.switchToUpgrades();
 
-      // Wait for the class to be applied
+      // wait for classes
       await expect(gamePage.doroUpgradesButton).toHaveClass(/active/);
       await expect(gamePage.upgradesContainer).toHaveClass(/active-view/);
       await expect(gamePage.autoDorosButton).not.toHaveClass(/active/);
@@ -82,13 +82,13 @@ test.describe("Basic Game Functionality", () => {
 
       // Allow "0" or "0.0"
       await expect(gamePage.dpsStat).toHaveText(/^0(\.0)?$/);
-      await expect(gamePage.totalStat).toContainText("1,000"); // Initial total doros
+      await expect(gamePage.totalStat).toContainText("1,000"); // start total
 
       await gamePage.closeStats();
       await expect(gamePage.statsOverlay).toBeHidden();
 
       /*
-       * Use UpgradePage to buy items for stats update
+       * buy stuff for stats
        */
       const upgradePage = new UpgradePage(page);
       await upgradePage.buyAutoclicker("ac_lurking_doro"); // 1 DPS

@@ -7,14 +7,14 @@ test.describe("Autoclicker System", () => {
   let gamePage;
   let upgradePage;
 
-  // This block runs before each test in this describe block.
+  // runs before everything
   test.beforeEach(async ({ page, baseURL }) => {
     gamePage = new GamePage(page);
     upgradePage = new UpgradePage(page);
 
     await gamePage.navigate(baseURL);
     await waitForGameInitialization(page);
-    // Reset to a known state with 1000 Doros by default.
+    // start with 1000 doros
     await resetGameState(page);
   });
 
@@ -24,12 +24,12 @@ test.describe("Autoclicker System", () => {
 
       await upgradePage.buyAutoclicker("ac_lurking_doro");
 
-      // Wait for at least one full generation interval (1.1 seconds)
+      // wait a bit
       await page.waitForTimeout(1100);
-      const doros = await page.evaluate(() => window.doroGame.state.doros);
+      const doros = await page.evaluate(() => window.doroGame.state.doros); // hope it actually generated
 
       const initialCost = 5;
-      // After 1 purchase (cost 5) and 1.1s of generation (0.1 dps), doros should be ~995.1
+      // check the math
       expect(doros).toBeGreaterThan(1000 - initialCost);
       expect(doros).toBeLessThan(1000 - initialCost + 1); // Narrower margin since DPS is lower
     });
@@ -61,8 +61,8 @@ test.describe("Autoclicker System", () => {
         const postPurchaseDoros = await page.evaluate(
           () => window.doroGame.state.doros
         );
-        // Doros will continue to increment as autoclickers are active.
-        expect(postPurchaseDoros).toBeGreaterThanOrEqual(1000 - 10 - 120);
+        // keep goin
+        expect(postPurchaseDoros).toBeGreaterThanOrEqual(1000 - 10 - 120); // close enough
       }).toPass();
 
       await gamePage.openStats();
@@ -83,7 +83,7 @@ test.describe("Autoclicker System", () => {
 
       await page.evaluate(() => {
         window.doroGame.state.doros = 15;
-        window.doroGame.state.notify(); // Manually trigger UI update
+        window.doroGame.state.notify(); // update ui
       });
 
       await expect(lurkingDoroButton).toBeEnabled();
@@ -99,8 +99,8 @@ test.describe("Autoclicker System", () => {
       const tooltip = walkinDoroButton.locator(".upgrade-tooltip");
       await expect(tooltip).toBeVisible();
 
-      await expect(tooltip).toContainText("Nice day out huh?"); // Description
-      await expect(tooltip).toContainText("Final Value: 15.00 Doro/s"); // Effect
+      await expect(tooltip).toContainText("Nice day out huh?"); // desc
+      await expect(tooltip).toContainText("Final Value: 15.00 Doro/s"); // effect
     });
   });
 
@@ -108,7 +108,7 @@ test.describe("Autoclicker System", () => {
     test("should correctly handle multiple purchases of the same autoclicker", async ({
       page,
     }) => {
-      // Start with a large amount of Doros to afford multiple purchases
+      // rich mode
       await resetGameState(page, { initialDoros: 50000 });
 
       // Purchase the same autoclicker 5 times.
@@ -116,7 +116,7 @@ test.describe("Autoclicker System", () => {
         await upgradePage.buyAutoclicker("ac_lurking_doro");
       }
 
-      // Verify the final state of the autoclicker.
+      // check stuff
       await expect(async () => {
         const ownedCount = await page.evaluate(() => {
           return window.doroGame.autoclickers.find((a) => a.id === "ac_lurking_doro").purchased;
@@ -124,7 +124,7 @@ test.describe("Autoclicker System", () => {
         expect(ownedCount).toBe(5);
       }).toPass();
 
-      // Verify the DPS reflects 5 purchases.
+      // check dps
       await gamePage.openStats();
       await expect(async () => {
         await expect(gamePage.dpsStat).toContainText("0.5"); // 5 owned * 0.1 DPS each
@@ -134,10 +134,10 @@ test.describe("Autoclicker System", () => {
     test("should correctly purchase a high-tier autoclicker", async ({
       page,
     }) => {
-      // Start with enough Doros for a high-tier item.
+      // rich mode again
       await resetGameState(page, { initialDoros: 50000 });
 
-      // Get the exact cost before purchasing.
+      // get costs
       const initialCost = await page.evaluate(() => {
         return window.doroGame.autoclickers.find((a) => a.id === "ac_napping_siren_doro").cost;
       });
@@ -151,11 +151,11 @@ test.describe("Autoclicker System", () => {
       await expect(async () => {
         const dorosAfter = await page.evaluate(() => window.doroGame.state.doros);
         const expectedDoros = dorosBefore - initialCost;
-        // The doros should be at least (before - cost), and potentially a bit more due to generation.
+        // math checks
         expect(dorosAfter).toBeGreaterThanOrEqual(expectedDoros);
         expect(dorosAfter).toBeLessThan(expectedDoros + 100); // Reasonable upper bound
 
-        // Verify the item was purchased.
+        // got it?
         const ownedCount = await page.evaluate(() => {
           return window.doroGame.autoclickers.find((a) => a.id === "ac_napping_siren_doro").purchased;
         });
