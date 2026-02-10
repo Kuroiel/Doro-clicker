@@ -1,12 +1,16 @@
-const { test, expect } = require('@playwright/test');
+import { test, expect } from "@playwright/test";
+import { GamePage } from "./pages/GamePage";
+import { UpgradePage } from "./pages/UpgradePage";
+import { waitForGameInitialization, resetGameState } from "./test-utils";
 
 test.describe('Milestone Refresh E2E', () => {
-  test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log('BROWSER:', msg.text()));
-    await page.goto('http://localhost:5500');
-    // Clear local storage if any
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
+  let gamePage;
+
+  test.beforeEach(async ({ page, baseURL }) => {
+    gamePage = new GamePage(page);
+    await gamePage.navigate(baseURL);
+    await waitForGameInitialization(page);
+    await resetGameState(page); // Resets to 1000 Doros by default
   });
 
   test('should show Lurking Doro Upgrade I after buying 10 Lurking Doros', async ({ page }) => {
