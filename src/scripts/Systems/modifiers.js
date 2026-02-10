@@ -37,6 +37,9 @@ export class ModifierSystem {
     if (mod.action === "multiply") {
       // Multiplicative modifiers: result = base * (value ^ count)
       current.multiplier *= Math.pow(mod.value, purchasedCount);
+    } else if (mod.action === "addMultiplier") {
+      // Additive multiplier bonuses: result = base * (multiplier + value * count)
+      current.multiplier += mod.value * purchasedCount;
     } else if (mod.action === "add") {
       // Additive modifiers: result = base + (value * count)
       current.add += mod.value * purchasedCount;

@@ -11,11 +11,9 @@ export class UIManager {
     this.AFFORDABILITY_CHECK_INTERVAL = 250;
 
     this.game.state.addListener(() => {
-      requestAnimationFrame(() => {
-        this.updateScoreDisplay();
-        this.updateStatsDisplay();
-        this.updateAllAffordability();
-      });
+      this.updateScoreDisplay();
+      this.updateStatsDisplay();
+      this.updateAllAffordability();
     });
   }
 
@@ -72,21 +70,25 @@ export class UIManager {
       this.formatter.formatNumber(num, decimals, null, decimals === 0, "cost");
 
     // Render autoclickers
-    this.game.autoclickers.forEach((item) => {
-      autoContainer.insertAdjacentHTML(
-        "beforeend",
-        UpgradeRenderer.renderUpgradeButton(item, false, formatter)
-      );
-    });
+    this.game.autoclickers
+      .filter((item) => item.type === "autoclicker")
+      .forEach((item) => {
+        autoContainer.insertAdjacentHTML(
+          "beforeend",
+          UpgradeRenderer.renderUpgradeButton(item, false, formatter)
+        );
+      });
 
     // Render upgrades based on visibility
     const { visibleUpgrades } = this.sortUpgrades();
-    visibleUpgrades.forEach((item) => {
-      upgradeContainer.insertAdjacentHTML(
-        "beforeend",
-        UpgradeRenderer.renderUpgradeButton(item, false, formatter)
-      );
-    });
+    visibleUpgrades
+      .filter((item) => item.type !== "autoclicker")
+      .forEach((item) => {
+        upgradeContainer.insertAdjacentHTML(
+          "beforeend",
+          UpgradeRenderer.renderUpgradeButton(item, false, formatter)
+        );
+      });
 
     // After rendering, immediately check for what can be afforded.
     this.updateAllAffordability();
@@ -124,15 +126,27 @@ export class UIManager {
 
   refreshUpgradeButton(upgradeId) {
     const button = DOMHelper.getUpgradeButton(upgradeId);
-    if (!button) {
-      this.forceFullUpdate();
-      return;
-    }
 
     const item =
       this.game.autoclickers.find((u) => u.id === upgradeId) ||
       this.game.upgrades.find((u) => u.id === upgradeId);
     if (!item) return;
+
+    // Check if an autoclicker purchase just hit a milestone that might unlock upgrades
+    if (item.type === "autoclicker") {
+      const isMilestone = item.template.milestones.some(
+        ([threshold]) => item.purchased === threshold
+      );
+      if (isMilestone) {
+        this.forceFullUpdate();
+        return;
+      }
+    }
+
+    if (!button) {
+      this.forceFullUpdate();
+      return;
+    }
 
     const formatter = (num, decimals = 0) =>
       this.formatter.formatNumber(num, decimals, null, decimals === 0, "cost");
@@ -157,7 +171,6 @@ export class UIManager {
     const oldTooltip = button.querySelector(".upgrade-tooltip");
     if (oldTooltip) {
       const newTooltipHTML = UpgradeRenderer.renderTooltip(item, formatter);
-      // Use a helper to safely create and replace the element
       DOMHelper.replaceElement(oldTooltip, newTooltipHTML);
     }
 

@@ -4,8 +4,9 @@ export const CostCalculations = {
     baseCost,
     purchased,
     baseGrowth = 1.1,
-    decadeFactor = 1.7,
-    milestones = []
+    milestones = [],
+    rampUpThreshold = 50,
+    rampUpGrowth = 1.15
   ) => {
     if (typeof purchased !== "number" || purchased < 0 || isNaN(purchased)) {
       console.error("Invalid purchased count:", purchased);
@@ -13,25 +14,35 @@ export const CostCalculations = {
     }
 
     let cost = baseCost;
-    cost *= Math.pow(baseGrowth, purchased);
 
-    const decades = Math.floor(purchased / 10);
-    cost *= Math.pow(decadeFactor, decades);
+    // Scaling for in-between numbers
+    if (purchased <= rampUpThreshold) {
+      cost *= Math.pow(baseGrowth, purchased);
+    } else {
+      // Scale normally up to threshold, then use higher growth
+      cost *= Math.pow(baseGrowth, rampUpThreshold);
+      cost *= Math.pow(rampUpGrowth, purchased - rampUpThreshold);
+    }
 
-    // Apply milestone multipliers
+    // Apply milestone multipliers (jumps in price)
     for (const [threshold, multiplier] of milestones) {
       if (purchased >= threshold) cost *= multiplier;
     }
 
     // Ensure cost always increases by at least 1
     if (purchased > 0) {
+      // Recursive call for simplicity to get prev cost, or just reuse logic
+      // But let's avoid recursion for performance in loops
       let prevCost = baseCost;
-      prevCost *= Math.pow(baseGrowth, purchased - 1);
-      const prevDecades = Math.floor((purchased - 1) / 10);
-      prevCost *= Math.pow(decadeFactor, prevDecades);
-
+      const prevPurchased = purchased - 1;
+      if (prevPurchased <= rampUpThreshold) {
+        prevCost *= Math.pow(baseGrowth, prevPurchased);
+      } else {
+        prevCost *= Math.pow(baseGrowth, rampUpThreshold);
+        prevCost *= Math.pow(rampUpGrowth, prevPurchased - rampUpThreshold);
+      }
       for (const [threshold, multiplier] of milestones) {
-        if (purchased - 1 >= threshold) prevCost *= multiplier;
+        if (prevPurchased >= threshold) prevCost *= multiplier;
       }
 
       cost = Math.max(cost, prevCost + 1);

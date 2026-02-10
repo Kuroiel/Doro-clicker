@@ -2,33 +2,63 @@ import { CostCalculations } from "./utils.js";
 
 const AUTOCLICKER_TEMPLATES = {
   BASIC: {
-    baseGrowth: 1.1,
-    decadeFactor: 1.7,
+    baseGrowth: 1.08,
+    rampUpThreshold: 50,
+    rampUpGrowth: 1.15,
+    dpsMilestoneMultiplier: 1.25,
     milestones: [
-      [100, 5],
-      [200, 5],
-      [500, 5],
-      [1000, 10],
+      [10, 1.4],
+      [25, 1.6],
+      [50, 1.8],
+      [100, 2.2],
+      [200, 2.8],
+      [500, 3.5],
+      [1000, 5.0],
     ],
   },
   MID_TIER: {
-    baseGrowth: 1.15,
-    decadeFactor: 1.8,
+    baseGrowth: 1.1,
+    rampUpThreshold: 50,
+    rampUpGrowth: 1.18,
+    dpsMilestoneMultiplier: 1.25,
     milestones: [
-      [100, 6],
-      [200, 6],
-      [500, 6],
-      [1000, 12],
+      [10, 1.5],
+      [25, 1.8],
+      [50, 2.0],
+      [100, 2.5],
+      [200, 3.2],
+      [500, 4.0],
+      [1000, 6.0],
     ],
   },
   HIGH_TIER: {
-    baseGrowth: 1.13,
-    decadeFactor: 1.4,
+    baseGrowth: 1.12,
+    rampUpThreshold: 50,
+    rampUpGrowth: 1.2,
+    dpsMilestoneMultiplier: 1.25,
     milestones: [
-      [100, 2],
-      [200, 3],
-      [500, 5],
-      [1000, 9],
+      [10, 1.6],
+      [25, 2.0],
+      [50, 2.5],
+      [100, 3.0],
+      [200, 4.0],
+      [500, 5.0],
+      [1000, 8.0],
+    ],
+  },
+  SIREN: {
+    baseGrowth: 1.04, // Weakest scaling
+    rampUpThreshold: 50,
+    rampUpGrowth: 1.08, // Weakest ramp up
+    dpsMilestoneMultiplier: 1.5, // Strongest reward
+    milestones: [
+      [10, 1.2],
+      [25, 1.3],
+      [50, 1.4],
+      [100, 1.6],
+      [200, 1.8],
+      [500, 2.0],
+      [1000, 3.0],
     ],
   },
 };
@@ -48,17 +78,37 @@ class Autoclicker {
     this.modifiers = config.modifiers || [];
   }
 
-  // Value is now dynamic based on modifiers
+  // Value is now dynamic based on modifiers AND milestones
   get value() {
-    if (!window.doroGame || !window.doroGame.modifierSystem) return this.baseDPS;
-    return window.doroGame.modifierSystem.apply(this.baseDPS, this.id, "dps");
+    let currentBase = this.baseDPS;
+
+    // Apply milestone DPS jumps
+    const milestonesReached = this.template.milestones.filter(
+      ([threshold]) => this.purchased >= threshold
+    ).length;
+
+    if (milestonesReached > 0) {
+      currentBase *= Math.pow(
+        this.template.dpsMilestoneMultiplier,
+        milestonesReached
+      );
+    }
+
+    if (!window.doroGame || !window.doroGame.modifierSystem) return currentBase;
+    return window.doroGame.modifierSystem.apply(currentBase, this.id, "dps");
   }
 
   get effectDescription() {
     const currentValue = this.value;
-    return `Provides ${currentValue.toFixed(1)} Doros per second.\nCurrently providing: ${(
-      currentValue * this.purchased
-    ).toFixed(1)} Doros per second.`;
+    const baseWithMilestones = this.baseDPS * Math.pow(
+      this.template.dpsMilestoneMultiplier,
+      this.template.milestones.filter(([t]) => this.purchased >= t).length
+    );
+    const multiplier = currentValue / baseWithMilestones;
+
+    return `Base DPS: ${baseWithMilestones.toFixed(2)} (x${multiplier.toFixed(2)} multi)\n` +
+           `Final Value: ${currentValue.toFixed(2)} Doro/s\n` +
+           `Total Production: ${(currentValue * this.purchased).toFixed(2)} Doro/s`;
   }
 
   get cost() {
@@ -66,8 +116,9 @@ class Autoclicker {
       this.baseCost,
       this.purchased,
       this.template.baseGrowth,
-      this.template.decadeFactor,
-      this.template.milestones
+      this.template.milestones,
+      this.template.rampUpThreshold,
+      this.template.rampUpGrowth
     );
   }
 }
@@ -76,8 +127,8 @@ export const autoclickers = [
   new Autoclicker({
     id: "ac_lurking_doro",
     name: "Lurking Doro",
-    baseCost: 10,
-    baseDPS: 1,
+    baseCost: 5, // Lower starting base price
+    baseDPS: 0.1, // Low base amount of doros per second
     icon: "./src/assets/dorocreep.webp",
     description: "Cause Ima creep Ima Doro.",
     template: "BASIC",
@@ -98,7 +149,7 @@ export const autoclickers = [
     baseDPS: 69,
     icon: "./src/assets/SirenDoroSleep.webp",
     description: "Bubble is working hard to give Siren a break.",
-    template: "HIGH_TIER",
+    template: "SIREN", // Weakest cost scaling
   }),
   new Autoclicker({
     id: "ac_comfy_doro",

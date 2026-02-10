@@ -32,14 +32,43 @@ describe("Autoclickers Data Module", () => {
 
   describe("effectDescription", () => {
     it("should generate a correct description string", () => {
-      const clicker = autoclickers.find((c) => c.id === "ac_lurking_doro");
+      const clicker = autoclickers[0];
       clicker.purchased = 5;
 
       const desc = clicker.effectDescription;
-      expect(desc).toContain(`Provides ${clicker.value.toFixed(1)} Doros per second.`);
-      expect(desc).toContain(
-        `Currently providing: ${(clicker.value * 5).toFixed(1)} Doros per second.`
-      );
+      expect(desc).toContain("Base DPS: 0.10");
+      expect(desc).toContain("Final Value: 0.10 Doro/s");
+      expect(desc).toContain("Total Production: 0.50 Doro/s");
+    });
+  });
+
+  describe("Milestone DPS Jumps", () => {
+    it("should increase DPS by 25% at each milestone for standard clickers", () => {
+      const clicker = autoclickers.find((c) => c.id === "ac_lurking_doro");
+      const baseValue = clicker.baseDPS;
+
+      clicker.purchased = 9;
+      expect(clicker.value).toBeCloseTo(baseValue);
+
+      clicker.purchased = 10;
+      expect(clicker.value).toBeCloseTo(baseValue * 1.25);
+
+      clicker.purchased = 24;
+      expect(clicker.value).toBeCloseTo(baseValue * 1.25);
+
+      clicker.purchased = 25;
+      expect(clicker.value).toBeCloseTo(baseValue * 1.25 * 1.25);
+    });
+
+    it("should increase DPS by 50% at each milestone for Siren clickers", () => {
+      const clicker = autoclickers.find((c) => c.id === "ac_napping_siren_doro");
+      const baseValue = clicker.baseDPS;
+
+      clicker.purchased = 10;
+      expect(clicker.value).toBeCloseTo(baseValue * 1.5);
+
+      clicker.purchased = 25;
+      expect(clicker.value).toBeCloseTo(baseValue * 1.5 * 1.5);
     });
   });
 

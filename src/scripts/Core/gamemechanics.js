@@ -36,10 +36,7 @@ export class GameMechanics {
 
       this.game.state.notify();
 
-      requestAnimationFrame(() => {
-        this.game.ui.refreshUpgradeButton(item.id);
-      });
-
+      this.game.ui.refreshUpgradeButton(item.id);
       return true;
     } finally {
       this._processingPurchase = false;

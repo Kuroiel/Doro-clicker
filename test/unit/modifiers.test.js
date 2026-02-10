@@ -47,6 +47,17 @@ describe("ModifierSystem", () => {
         modifierSystem.addModifier(mod, 3); // 2^3 = 8
         expect(modifierSystem.getMultiplier("player", "click")).toBe(8);
     });
+
+    it("should add an additive multiplier modifier", () => {
+      const mod = {
+        target: "test",
+        type: "dps",
+        action: "addMultiplier",
+        value: 0.1,
+      };
+      modifierSystem.addModifier(mod, 2); // 1.0 + 0.1 * 2 = 1.2
+      expect(modifierSystem.getMultiplier("test", "dps")).toBeCloseTo(1.2);
+    });
   });
 
   describe("recalculate", () => {

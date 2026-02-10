@@ -13,25 +13,29 @@ describe("CostCalculations", () => {
       expect(CostCalculations.standardCost(10, 2)).toBe(12);
     });
 
-    it("should apply decade jumps", () => {
-      // 10 purchased. decades = 1. factor = 1.7.
-      // 10 * 1.1^10 * 1.7^1
-      const base = 10 * Math.pow(1.1, 10);
-      const expected = Math.round(base * 1.7);
-      expect(CostCalculations.standardCost(10, 10)).toBe(expected);
+    it("should apply ramp up after threshold", () => {
+      // base=10, growth=1.1, threshold=2. rampUpGrowth=1.2
+      // p=0: 10
+      // p=1: 10 * 1.1 = 11
+      // p=2: 10 * 1.1^2 = 12.1 -> 12
+      // p=3: 10 * 1.1^2 * 1.2^1 = 14.52 -> 15
+      expect(CostCalculations.standardCost(10, 0, 1.1, [], 2, 1.2)).toBe(10);
+      expect(CostCalculations.standardCost(10, 1, 1.1, [], 2, 1.2)).toBe(11);
+      expect(CostCalculations.standardCost(10, 2, 1.1, [], 2, 1.2)).toBe(12);
+      expect(CostCalculations.standardCost(10, 3, 1.1, [], 2, 1.2)).toBe(15);
     });
 
-    it("should apply milestones", () => {
-      const milestones = [[5, 2]]; // At 5 purchased, multiply by 2
-      // 10 * 1.1^5 * 2
-      const base = 10 * Math.pow(1.1, 5);
-      const expected = Math.round(base * 2);
-      expect(CostCalculations.standardCost(10, 5, 1.1, 1.7, milestones)).toBe(expected);
+    it("should apply milestones as jumps", () => {
+      // base=10, growth=1.0 (flat), milestones=[[2, 2]]
+      // p=1: 10
+      // p=2: 10 * 2 = 20
+      expect(CostCalculations.standardCost(10, 1, 1.0, [[2, 2]], 10, 1.0)).toBe(11);
+      expect(CostCalculations.standardCost(10, 2, 1.0, [[2, 2]], 10, 1.0)).toBe(20);
     });
 
     it("should always increase cost by at least 1", () => {
         // Growth 1.0 would mean no change, but logic forces +1
-        expect(CostCalculations.standardCost(10, 1, 1.0)).toBe(11);
+        expect(CostCalculations.standardCost(10, 1, 1.0, [], 10, 1.0)).toBe(11);
     });
 
     it("should handle invalid inputs", () => {

@@ -28,10 +28,10 @@ test.describe("Autoclicker System", () => {
       await page.waitForTimeout(1100);
       const doros = await page.evaluate(() => window.doroGame.state.doros);
 
-      const initialCost = 10;
-      // After 1 purchase (cost 10) and 1.1s of generation (1 dps), doros should be ~991.1
+      const initialCost = 5;
+      // After 1 purchase (cost 5) and 1.1s of generation (0.1 dps), doros should be ~995.1
       expect(doros).toBeGreaterThan(1000 - initialCost);
-      expect(doros).toBeLessThan(1000 - initialCost + 2); // Give a small margin for timing
+      expect(doros).toBeLessThan(1000 - initialCost + 1); // Narrower margin since DPS is lower
     });
 
     test("should scale autoclicker costs after purchase", async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe("Autoclicker System", () => {
       await gamePage.openStats();
 
       await expect(async () => {
-        await expect(gamePage.dpsStat).toContainText("16.0"); // 1 DPS from Lurking Doro + 15 DPS from Walkin Doro
+        await expect(gamePage.dpsStat).toContainText("15.1"); // 0.1 DPS from Lurking Doro + 15 DPS from Walkin Doro
       }).toPass();
     });
   });
@@ -77,8 +77,8 @@ test.describe("Autoclicker System", () => {
     test("should disable button when unaffordable and enable when affordable", async ({
       page,
     }) => {
-      await resetGameState(page, { initialDoros: 5 });
-      const lurkingDoroButton = upgradePage.getUpgradeButton("ac_lurking_doro"); // Costs 10
+      await resetGameState(page, { initialDoros: 2 });
+      const lurkingDoroButton = upgradePage.getUpgradeButton("ac_lurking_doro"); // Costs 5
       await expect(lurkingDoroButton).toBeDisabled();
 
       await page.evaluate(() => {
@@ -100,7 +100,7 @@ test.describe("Autoclicker System", () => {
       await expect(tooltip).toBeVisible();
 
       await expect(tooltip).toContainText("Nice day out huh?"); // Description
-      await expect(tooltip).toContainText("Provides 15.0 Doros per second."); // Effect
+      await expect(tooltip).toContainText("Final Value: 15.00 Doro/s"); // Effect
     });
   });
 
@@ -127,7 +127,7 @@ test.describe("Autoclicker System", () => {
       // Verify the DPS reflects 5 purchases.
       await gamePage.openStats();
       await expect(async () => {
-        await expect(gamePage.dpsStat).toContainText("5.0"); // 5 owned * 1 DPS each
+        await expect(gamePage.dpsStat).toContainText("0.5"); // 5 owned * 0.1 DPS each
       }).toPass();
     });
 

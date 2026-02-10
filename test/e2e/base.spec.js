@@ -97,7 +97,7 @@ test.describe("Basic Game Functionality", () => {
       await gamePage.openStats();
 
       await expect(async () => {
-        await expect(gamePage.dpsStat).toContainText("16.0");
+        await expect(gamePage.dpsStat).toContainText("15.1");
         await expect(gamePage.totalStat).toHaveText(/1,\d{3}/);
       }).toPass();
     });
@@ -107,7 +107,7 @@ test.describe("Basic Game Functionality", () => {
     }) => {
       const upgradePage = new UpgradePage(page);
       await upgradePage.buyAutoclicker("ac_lurking_doro");
-      await expect(gamePage.scoreDisplay).toContainText("Doros: 990");
+      await expect(gamePage.scoreDisplay).toContainText("Doros: 995");
 
       await gamePage.resetGame();
 

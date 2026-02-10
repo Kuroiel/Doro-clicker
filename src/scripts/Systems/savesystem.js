@@ -37,8 +37,15 @@ export class SaveSystem {
   loadGame() {
     try {
       const saveData = JSON.parse(localStorage.getItem("doroClickerSave"));
+      
+      // ALWAYS reset purchased counts first to avoid leakage from previous sessions
+      this.game.autoclickers.forEach(a => a.purchased = 0);
+      this.game.upgrades.forEach(u => u.purchased = 0);
+
       if (!saveData) {
         // If no save data, do an initial UI render and exit
+        this.game.modifierSystem.recalculate();
+        this.game.autoclickerSystem.recalculateDPS();
         this.game.ui.renderAllItems();
         return;
       }

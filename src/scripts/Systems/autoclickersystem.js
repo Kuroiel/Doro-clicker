@@ -21,10 +21,8 @@ export class AutoclickerSystem {
           // This check is slightly simplified for clarity
           this.game.state.addAutoDoros(dps / 10); // Add Doros based on DPS
 
-          requestAnimationFrame(() => {
-            this.game.ui.updateScoreDisplay();
-            this.game.ui.updateAllAffordability();
-          });
+          this.game.ui.updateScoreDisplay();
+          this.game.ui.updateAllAffordability();
         }
       } catch (error) {
         console.error("DPS calculation error:", error);
